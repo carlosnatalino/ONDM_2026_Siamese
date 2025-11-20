@@ -103,16 +103,35 @@ class DASClassificationDataset(Dataset):
     Args:
         x: Feature array (n_samples, n_features)
         y: Label array (n_samples, n_classes) - one-hot encoded
+        normalize: If True, normalize features to zero mean and unit variance
     """
     
-    def __init__(self, x, y):
+    def __init__(self, x, y, normalize=True, mean=None, std=None):
         """
         Initialize the dataset.
         
         Args:
             x: Feature array (numpy array)
             y: Label array (numpy array, one-hot encoded)
+            normalize: Whether to normalize the features
+            mean: Precomputed mean for normalization (if None, compute from x)
+            std: Precomputed std for normalization (if None, compute from x)
         """
+        # Normalize features to help with training stability
+        # The paper doesn't explicitly mention normalization, but it's a standard practice
+        # and the data has mean~4.24, std~0.39, which benefits from normalization
+        if normalize:
+            if mean is None or std is None:
+                self.mean = np.mean(x, axis=0, keepdims=True)
+                self.std = np.std(x, axis=0, keepdims=True) + 1e-8  # Add small epsilon to avoid division by zero
+            else:
+                self.mean = mean
+                self.std = std
+            x = (x - self.mean) / self.std
+        else:
+            self.mean = None
+            self.std = None
+        
         # Convert to tensors
         self.x = torch.FloatTensor(x)
         # Convert one-hot to class indices for CrossEntropyLoss
@@ -161,18 +180,20 @@ class DASEventClassifier(nn.Module):
     - Dense layer size: 1024 (provides sufficient capacity for classification)
     """
     
-    def __init__(self, input_dim: int = 2048, num_classes: int = 9):
+    def __init__(self, input_dim: int = 2048, num_classes: int = 9, use_sigmoid: bool = False):
         """
         Initialize the CNN model.
         
         Args:
             input_dim: Input feature dimension (default: 2048 from paper)
             num_classes: Number of output classes (default: 9, actual dataset has 9 classes)
+            use_sigmoid: If True, use Sigmoid activation (as in paper), else use ReLU (recommended)
         """
         super(DASEventClassifier, self).__init__()
         
         self.input_dim = input_dim
         self.num_classes = num_classes
+        self.use_sigmoid = use_sigmoid
         
         # First convolutional block
         # Input: [batch, 1, 2048]
@@ -226,10 +247,19 @@ class DASEventClassifier(nn.Module):
             out_features=1024       # From paper/figure
         )
         
-        # Sigmoid activation (from paper/figure)
-        # Note: Sigmoid is used here instead of ReLU, which is less common
-        # but specified in the paper architecture
-        self.sigmoid = nn.Sigmoid()
+        # Activation function
+        # NOTE: The paper mentions Sigmoid, but this causes vanishing gradients.
+        # Using ReLU instead for better gradient flow. If you want to match the
+        # paper exactly, set use_sigmoid=True, but expect slower convergence.
+        # The paper achieved 91% accuracy, likely with careful initialization
+        # and normalization that we're also adding.
+        if self.use_sigmoid:
+            self.activation = nn.Sigmoid()
+        else:
+            self.activation = nn.ReLU()
+        
+        # Initialize weights properly for better training
+        self._initialize_weights()
         
         # Output layer
         # Input: [batch, 1024]
@@ -241,6 +271,27 @@ class DASEventClassifier(nn.Module):
         
         # Softmax is applied in the loss function (CrossEntropyLoss includes it)
         # but we can also apply it explicitly if needed
+    
+    def _initialize_weights(self):
+        """
+        Initialize weights using He initialization for ReLU or Xavier for Sigmoid.
+        This helps with training stability and convergence.
+        """
+        for m in self.modules():
+            if isinstance(m, nn.Conv1d):
+                if self.use_sigmoid:
+                    nn.init.xavier_uniform_(m.weight)
+                else:
+                    nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                if self.use_sigmoid:
+                    nn.init.xavier_uniform_(m.weight)
+                else:
+                    nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
     
     def forward(self, x):
         """
@@ -272,7 +323,7 @@ class DASEventClassifier(nn.Module):
         
         # Fully connected layers
         x = self.fc1(x)           # [batch, 1024]
-        x = self.sigmoid(x)       # [batch, 1024]
+        x = self.activation(x)     # [batch, 1024] - ReLU or Sigmoid
         x = self.fc2(x)           # [batch, num_classes]
         
         return x
@@ -313,6 +364,11 @@ def train_epoch(model, train_loader, criterion, optimizer, device, class_weights
         
         # Backward pass
         loss.backward()
+        
+        # Gradient clipping to prevent exploding gradients
+        # This helps stabilize training, especially with the large model
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        
         optimizer.step()
         
         # Statistics
@@ -483,8 +539,13 @@ def main():
     parser.add_argument(
         '--lr',
         type=float,
-        default=1e-3,
-        help='Learning rate (default: 1e-3)'
+        default=1e-4,
+        help='Learning rate (default: 1e-4, reduced from 1e-3 for better stability)'
+    )
+    parser.add_argument(
+        '--use_sigmoid',
+        action='store_true',
+        help='Use Sigmoid activation (as in paper) instead of ReLU (not recommended)'
     )
     parser.add_argument(
         '--weight_decay',
@@ -581,8 +642,14 @@ def main():
     # ========================================================================
     # Create DataLoaders
     # ========================================================================
-    train_dataset = DASClassificationDataset(X_train, Y_train)
-    val_dataset = DASClassificationDataset(X_val, Y_val)
+    # Normalize training data and use same normalization for validation
+    train_dataset = DASClassificationDataset(X_train, Y_train, normalize=True)
+    val_dataset = DASClassificationDataset(
+        X_val, Y_val, 
+        normalize=True, 
+        mean=train_dataset.mean, 
+        std=train_dataset.std
+    )
     
     train_loader = DataLoader(
         train_dataset,
@@ -609,7 +676,8 @@ def main():
     
     model = DASEventClassifier(
         input_dim=2048,      # From paper
-        num_classes=num_classes
+        num_classes=num_classes,
+        use_sigmoid=args.use_sigmoid
     ).to(device)
     
     # Count parameters
