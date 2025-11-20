@@ -1,0 +1,722 @@
+#!/usr/bin/env python3
+"""
+CNN Classifier for DAS Event Classification
+
+This script implements a convolutional neural network (CNN) for classifying
+Distributed Acoustic Sensing (DAS) events based on the architecture described
+in the OFS paper. The model processes frequency-domain spectra of DAS signals
+to classify events into multiple categories (the dataset contains 9 classes).
+
+Architecture (from paper/figure):
+- Input: DAS Channel spectrum (1x2048)
+- Conv1D: 64 filters, kernel_size=7
+- LeakyReLU activation
+- MaxPool1d: kernel_size=4
+- Conv1D: 256 filters, kernel_size=7
+- LeakyReLU activation
+- MaxPool1d: kernel_size=4
+- Flatten
+- Dense: 1024 neurons with Sigmoid activation
+- Dense: 7 neurons (output classes)
+- Softmax activation
+
+Author: Auto-generated based on OFS paper architecture
+"""
+
+import sys
+import logging
+import random
+import argparse
+from pathlib import Path
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+
+# Import data loader
+from data_loader import DASDataLoader, fft
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Utility Functions
+# ============================================================================
+
+def set_seed(seed: int = 42):
+    """
+    Set random seeds for reproducibility.
+    
+    Args:
+        seed: Random seed value
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    if torch.backends.mps.is_available():
+        torch.mps.manual_seed(seed)
+    logger.info(f"Random seed set to {seed}")
+
+
+def get_device():
+    """
+    Detect and return the best available device (MPS > CUDA > CPU).
+    
+    Returns:
+        torch.device: The device to use for computation
+    """
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+        logger.info("Using Apple Silicon (MPS)")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+        logger.info(f"Using CUDA: {torch.cuda.get_device_name(0)}")
+    else:
+        device = torch.device("cpu")
+        logger.info("Using CPU")
+    return device
+
+
+# ============================================================================
+# Dataset Class
+# ============================================================================
+
+class DASClassificationDataset(Dataset):
+    """
+    PyTorch Dataset for DAS event classification.
+    
+    Args:
+        x: Feature array (n_samples, n_features)
+        y: Label array (n_samples, n_classes) - one-hot encoded
+    """
+    
+    def __init__(self, x, y):
+        """
+        Initialize the dataset.
+        
+        Args:
+            x: Feature array (numpy array)
+            y: Label array (numpy array, one-hot encoded)
+        """
+        # Convert to tensors
+        self.x = torch.FloatTensor(x)
+        # Convert one-hot to class indices for CrossEntropyLoss
+        self.y = torch.LongTensor(np.argmax(y, axis=1))
+        
+    def __len__(self):
+        return len(self.x)
+    
+    def __getitem__(self, idx):
+        return self.x[idx], self.y[idx]
+
+
+# ============================================================================
+# CNN Model Architecture
+# ============================================================================
+
+class DASEventClassifier(nn.Module):
+    """
+    CNN classifier for DAS event classification.
+    
+    Architecture based on the OFS paper:
+    - Input: 1x2048 (DAS Channel spectrum)
+    - Conv1D: 64 filters, kernel_size=7, stride=1
+      Output: 64x2042 (2048 - 7 + 1 = 2042)
+    - LeakyReLU activation
+    - MaxPool1d: kernel_size=4
+      Output: 64x510 (2042 / 4 ≈ 510, accounting for rounding)
+    - Conv1D: 256 filters, kernel_size=7, stride=1
+      Output: 256x504 (510 - 7 + 1 = 504)
+    - LeakyReLU activation
+    - MaxPool1d: kernel_size=4
+      Output: 256x126 (504 / 4 = 126)
+    - Flatten
+      Output: 256 * 126 = 32256
+    - Dense: 1024 neurons with Sigmoid activation
+    - Dense: N neurons (output classes, where N is the number of classes in the dataset)
+    - Softmax activation (applied in loss function)
+    
+    Parameters from paper:
+    - Input dimension: 2048 (first 2048 elements of single-sided magnitude spectrum)
+    - Number of classes: The actual dataset contains 9 classes: car, walk, construction, 
+      regular, fence, openclose, longboard, running, manipulation
+      (Note: The figure shows 7 classes, but the actual dataset has 9 classes)
+    - Conv1D kernel size: 7 (standard choice for 1D CNNs)
+    - Pooling size: 4 (reduces dimensionality by factor of 4)
+    - Dense layer size: 1024 (provides sufficient capacity for classification)
+    """
+    
+    def __init__(self, input_dim: int = 2048, num_classes: int = 9):
+        """
+        Initialize the CNN model.
+        
+        Args:
+            input_dim: Input feature dimension (default: 2048 from paper)
+            num_classes: Number of output classes (default: 9, actual dataset has 9 classes)
+        """
+        super(DASEventClassifier, self).__init__()
+        
+        self.input_dim = input_dim
+        self.num_classes = num_classes
+        
+        # First convolutional block
+        # Input: [batch, 1, 2048]
+        # Output: [batch, 64, 2042] (2048 - 7 + 1 = 2042)
+        self.conv1 = nn.Conv1d(
+            in_channels=1,
+            out_channels=64,  # From paper/figure
+            kernel_size=7,    # From paper/figure
+            stride=1,
+            padding=0
+        )
+        
+        # LeakyReLU activation (negative_slope=0.01 is default)
+        # From paper/figure - LeakyReLU helps with gradient flow
+        self.leaky_relu1 = nn.LeakyReLU(negative_slope=0.01)
+        
+        # Max pooling: reduces length by factor of 4
+        # Input: [batch, 64, 2042]
+        # Output: [batch, 64, 510] (2042 / 4 = 510.5, rounded down to 510)
+        self.pool1 = nn.MaxPool1d(kernel_size=4)
+        
+        # Second convolutional block
+        # Input: [batch, 64, 510]
+        # Output: [batch, 256, 504] (510 - 7 + 1 = 504)
+        self.conv2 = nn.Conv1d(
+            in_channels=64,
+            out_channels=256,  # From paper/figure
+            kernel_size=7,     # From paper/figure
+            stride=1,
+            padding=0
+        )
+        
+        # LeakyReLU activation
+        self.leaky_relu2 = nn.LeakyReLU(negative_slope=0.01)
+        
+        # Max pooling: reduces length by factor of 4
+        # Input: [batch, 256, 504]
+        # Output: [batch, 256, 126] (504 / 4 = 126)
+        self.pool2 = nn.MaxPool1d(kernel_size=4)
+        
+        # Flatten layer
+        # Input: [batch, 256, 126]
+        # Output: [batch, 32256] (256 * 126 = 32256)
+        self.flatten = nn.Flatten()
+        
+        # First fully connected layer
+        # Input: [batch, 32256]
+        # Output: [batch, 1024]
+        self.fc1 = nn.Linear(
+            in_features=256 * 126,  # 32256 from paper/figure
+            out_features=1024       # From paper/figure
+        )
+        
+        # Sigmoid activation (from paper/figure)
+        # Note: Sigmoid is used here instead of ReLU, which is less common
+        # but specified in the paper architecture
+        self.sigmoid = nn.Sigmoid()
+        
+        # Output layer
+        # Input: [batch, 1024]
+        # Output: [batch, num_classes]
+        self.fc2 = nn.Linear(
+            in_features=1024,
+            out_features=num_classes
+        )
+        
+        # Softmax is applied in the loss function (CrossEntropyLoss includes it)
+        # but we can also apply it explicitly if needed
+    
+    def forward(self, x):
+        """
+        Forward pass through the network.
+        
+        Args:
+            x: Input tensor of shape [batch, input_dim]
+            
+        Returns:
+            Output tensor of shape [batch, num_classes]
+        """
+        # Reshape input from [batch, 2048] to [batch, 1, 2048] for Conv1d
+        # Conv1d expects [batch, channels, length]
+        if x.dim() == 2:
+            x = x.unsqueeze(1)  # Add channel dimension
+        
+        # First convolutional block
+        x = self.conv1(x)        # [batch, 64, 2042]
+        x = self.leaky_relu1(x)   # [batch, 64, 2042]
+        x = self.pool1(x)         # [batch, 64, 510]
+        
+        # Second convolutional block
+        x = self.conv2(x)         # [batch, 256, 504]
+        x = self.leaky_relu2(x)  # [batch, 256, 504]
+        x = self.pool2(x)         # [batch, 256, 126]
+        
+        # Flatten
+        x = self.flatten(x)       # [batch, 32256]
+        
+        # Fully connected layers
+        x = self.fc1(x)           # [batch, 1024]
+        x = self.sigmoid(x)       # [batch, 1024]
+        x = self.fc2(x)           # [batch, num_classes]
+        
+        return x
+
+
+# ============================================================================
+# Training Functions
+# ============================================================================
+
+def train_epoch(model, train_loader, criterion, optimizer, device, class_weights=None):
+    """
+    Train the model for one epoch.
+    
+    Args:
+        model: The neural network model
+        train_loader: DataLoader for training data
+        criterion: Loss function
+        optimizer: Optimizer
+        device: Device to run on
+        class_weights: Optional class weights tensor for handling class imbalance
+        
+    Returns:
+        Average training loss and accuracy
+    """
+    model.train()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data = data.to(device)
+        target = target.to(device)
+        
+        # Forward pass
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        
+        # Backward pass
+        loss.backward()
+        optimizer.step()
+        
+        # Statistics
+        running_loss += loss.item() * data.size(0)
+        _, predicted = torch.max(output.data, 1)
+        total += target.size(0)
+        correct += (predicted == target).sum().item()
+    
+    avg_loss = running_loss / total
+    accuracy = correct / total
+    
+    return avg_loss, accuracy
+
+
+def evaluate(model, data_loader, criterion, device):
+    """
+    Evaluate the model on a dataset.
+    
+    Args:
+        model: The neural network model
+        data_loader: DataLoader for evaluation data
+        criterion: Loss function
+        device: Device to run on
+        
+    Returns:
+        Average loss, accuracy, and predictions
+    """
+    model.eval()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    all_predictions = []
+    all_targets = []
+    
+    with torch.no_grad():
+        for data, target in data_loader:
+            data = data.to(device)
+            target = target.to(device)
+            
+            output = model(data)
+            loss = criterion(output, target)
+            
+            running_loss += loss.item() * data.size(0)
+            _, predicted = torch.max(output.data, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum().item()
+            
+            all_predictions.extend(predicted.cpu().numpy())
+            all_targets.extend(target.cpu().numpy())
+    
+    avg_loss = running_loss / total
+    accuracy = correct / total
+    
+    return avg_loss, accuracy, all_predictions, all_targets
+
+
+def train_model(
+    model,
+    train_loader,
+    val_loader,
+    num_epochs,
+    learning_rate,
+    weight_decay,
+    device,
+    class_weights=None,
+    log_interval=50
+):
+    """
+    Train the model for multiple epochs.
+    
+    Args:
+        model: The neural network model
+        train_loader: DataLoader for training data
+        val_loader: DataLoader for validation data
+        num_epochs: Number of training epochs
+        learning_rate: Learning rate for optimizer
+        weight_decay: Weight decay (L2 regularization)
+        device: Device to run on
+        class_weights: Optional class weights tensor for handling class imbalance
+        log_interval: Interval for logging batch progress
+        
+    Returns:
+        Training history dictionary
+    """
+    # Loss function: CrossEntropyLoss includes Softmax
+    # Use class weights if provided to handle class imbalance
+    if class_weights is not None:
+        class_weights = class_weights.to(device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
+        logger.info(f"Using class weights: {class_weights.cpu().numpy()}")
+    else:
+        criterion = nn.CrossEntropyLoss()
+    
+    # Optimizer: Adam with weight decay
+    # Learning rate and weight decay are hyperparameters not specified in paper
+    # Using common defaults: lr=1e-3, weight_decay=1e-4
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=learning_rate,
+        weight_decay=weight_decay
+    )
+    
+    # Training history
+    history = {
+        'train_loss': [],
+        'train_acc': [],
+        'val_loss': [],
+        'val_acc': []
+    }
+    
+    logger.info(f"Starting training for {num_epochs} epochs...")
+    logger.info(f"Learning rate: {learning_rate}, Weight decay: {weight_decay}")
+    
+    for epoch in range(1, num_epochs + 1):
+        # Train
+        train_loss, train_acc = train_epoch(
+            model, train_loader, criterion, optimizer, device, class_weights
+        )
+        
+        # Validate
+        val_loss, val_acc, _, _ = evaluate(
+            model, val_loader, criterion, device
+        )
+        
+        # Record history
+        history['train_loss'].append(train_loss)
+        history['train_acc'].append(train_acc)
+        history['val_loss'].append(val_loss)
+        history['val_acc'].append(val_acc)
+        
+        # Log progress
+        logger.info(
+            f"Epoch [{epoch}/{num_epochs}] | "
+            f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | "
+            f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}"
+        )
+    
+    return history
+
+
+# ============================================================================
+# Main Function
+# ============================================================================
+
+def main():
+    """Main training script."""
+    parser = argparse.ArgumentParser(
+        description='Train CNN classifier for DAS event classification'
+    )
+    parser.add_argument(
+        '--data_dir',
+        type=str,
+        default='/nobackup/carda/datasets/DAS-dataset/data',
+        help='Path to dataset directory'
+    )
+    parser.add_argument(
+        '--epochs',
+        type=int,
+        default=10,
+        help='Number of training epochs (default: 10)'
+    )
+    parser.add_argument(
+        '--batch_size',
+        type=int,
+        default=64,
+        help='Batch size (default: 64)'
+    )
+    parser.add_argument(
+        '--lr',
+        type=float,
+        default=1e-3,
+        help='Learning rate (default: 1e-3)'
+    )
+    parser.add_argument(
+        '--weight_decay',
+        type=float,
+        default=1e-4,
+        help='Weight decay (default: 1e-4)'
+    )
+    parser.add_argument(
+        '--seed',
+        type=int,
+        default=42,
+        help='Random seed (default: 42)'
+    )
+    parser.add_argument(
+        '--test_size',
+        type=float,
+        default=0.2,
+        help='Validation set size (default: 0.2)'
+    )
+    
+    args = parser.parse_args()
+    
+    # Set random seed
+    set_seed(args.seed)
+    
+    # Get device
+    device = get_device()
+    
+    # ========================================================================
+    # Data Loading
+    # ========================================================================
+    logger.info("=" * 70)
+    logger.info("Loading and preprocessing dataset...")
+    logger.info("=" * 70)
+    
+    # Decimation dictionary (from README.md example)
+    # Reduces dataset size by sampling every Nth sample for 'regular' class
+    decim_dict = {
+        'regular': 50,  # Decimate regular class by factor of 50
+    }
+    
+    # Initialize data loader with parameters from README.md
+    # Parameters from paper/README:
+    # - sample_len: 2048 (first 2048 elements of spectrum)
+    # - transform: fft (FFT transformation to frequency domain)
+    # - fsize: 8192 (window size for sliding window)
+    # - shift: 2048 (overlap of 75% with fsize=8192)
+    parser_loader = DASDataLoader(
+        data_dir=args.data_dir,
+        sample_len=2048,      # From paper: first 2048 elements of spectrum
+        transform=fft,         # FFT transformation (from README.md)
+        fsize=8192,           # Window size (from README.md)
+        shift=2048,           # Step size (from README.md)
+        decimate=decim_dict,  # Decimation (from README.md)
+    )
+    
+    # Parse dataset
+    x, y = parser_loader.parse_dataset()
+    
+    logger.info(f"Dataset loaded: {len(x)} samples")
+    logger.info(f"Feature shape: {x.shape}")
+    logger.info(f"Label shape: {y.shape}")
+    logger.info(f"Number of classes: {y.shape[1]}")
+    logger.info(f"Class names: {parser_loader.encoder.classes_}")
+    
+    # Get number of classes from data
+    num_classes = y.shape[1]
+    
+    # Get class weights from data loader (computed during encoding)
+    # These weights help handle class imbalance
+    class_weights = torch.FloatTensor(parser_loader.class_weights)
+    logger.info(f"Class weights for handling imbalance: {class_weights.numpy()}")
+    
+    # ========================================================================
+    # Data Splitting
+    # ========================================================================
+    logger.info("=" * 70)
+    logger.info("Splitting dataset into train and validation sets...")
+    logger.info("=" * 70)
+    
+    # Convert one-hot to class indices for stratified split
+    y_classes = np.argmax(y, axis=1)
+    
+    X_train, X_val, Y_train, Y_val = train_test_split(
+        x, y,
+        test_size=args.test_size,
+        random_state=args.seed,
+        stratify=y_classes
+    )
+    
+    logger.info(f"Training samples: {len(X_train)}")
+    logger.info(f"Validation samples: {len(X_val)}")
+    
+    # ========================================================================
+    # Create DataLoaders
+    # ========================================================================
+    train_dataset = DASClassificationDataset(X_train, Y_train)
+    val_dataset = DASClassificationDataset(X_val, Y_val)
+    
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True if torch.cuda.is_available() else False
+    )
+    
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True if torch.cuda.is_available() else False
+    )
+    
+    # ========================================================================
+    # Model Initialization
+    # ========================================================================
+    logger.info("=" * 70)
+    logger.info("Initializing model...")
+    logger.info("=" * 70)
+    
+    model = DASEventClassifier(
+        input_dim=2048,      # From paper
+        num_classes=num_classes
+    ).to(device)
+    
+    # Count parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    logger.info(f"Model architecture:")
+    logger.info(model)
+    logger.info(f"Total parameters: {total_params:,}")
+    logger.info(f"Trainable parameters: {trainable_params:,}")
+    
+    # ========================================================================
+    # Training
+    # ========================================================================
+    logger.info("=" * 70)
+    logger.info("Starting training...")
+    logger.info("=" * 70)
+    
+    history = train_model(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        num_epochs=args.epochs,
+        learning_rate=args.lr,
+        weight_decay=args.weight_decay,
+        device=device,
+        class_weights=class_weights
+    )
+    
+    # ========================================================================
+    # Final Evaluation
+    # ========================================================================
+    logger.info("=" * 70)
+    logger.info("Final evaluation...")
+    logger.info("=" * 70)
+    
+    criterion = nn.CrossEntropyLoss()
+    val_loss, val_acc, predictions, targets = evaluate(
+        model, val_loader, criterion, device
+    )
+    
+    logger.info(f"Final Validation Loss: {val_loss:.4f}")
+    logger.info(f"Final Validation Accuracy: {val_acc:.4f}")
+    
+    # Classification report
+    logger.info("\nClassification Report:")
+    logger.info("\n" + classification_report(
+        targets,
+        predictions,
+        target_names=parser_loader.encoder.classes_
+    ))
+    
+    # Confusion matrix
+    cm = confusion_matrix(targets, predictions)
+    logger.info("\nConfusion Matrix:")
+    logger.info(f"\n{cm}")
+    
+    # ========================================================================
+    # Plot Training History
+    # ========================================================================
+    logger.info("=" * 70)
+    logger.info("Plotting training history...")
+    logger.info("=" * 70)
+    
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    
+    epochs = range(1, len(history['train_loss']) + 1)
+    
+    # Plot loss
+    axes[0].plot(epochs, history['train_loss'], 'b-', label='Train Loss', linewidth=2)
+    axes[0].plot(epochs, history['val_loss'], 'r-', label='Val Loss', linewidth=2)
+    axes[0].set_xlabel('Epoch', fontsize=12)
+    axes[0].set_ylabel('Loss', fontsize=12)
+    axes[0].set_title('Training and Validation Loss', fontsize=14, fontweight='bold')
+    axes[0].grid(True, alpha=0.3)
+    axes[0].legend(fontsize=11)
+    
+    # Plot accuracy
+    axes[1].plot(epochs, history['train_acc'], 'b-', label='Train Acc', linewidth=2, marker='o', markersize=4)
+    axes[1].plot(epochs, history['val_acc'], 'r-', label='Val Acc', linewidth=2, marker='s', markersize=4)
+    axes[1].set_xlabel('Epoch', fontsize=12)
+    axes[1].set_ylabel('Accuracy', fontsize=12)
+    axes[1].set_title('Training and Validation Accuracy', fontsize=14, fontweight='bold')
+    axes[1].grid(True, alpha=0.3)
+    axes[1].legend(fontsize=11)
+    axes[1].set_ylim([0, 1])
+    
+    plt.tight_layout()
+    plt.savefig('training_history.png', dpi=150, bbox_inches='tight')
+    logger.info("Training history saved to 'training_history.png'")
+    
+    # Print summary
+    logger.info("=" * 70)
+    logger.info("Training Summary")
+    logger.info("=" * 70)
+    logger.info(f"Total Epochs: {len(epochs)}")
+    logger.info(f"Final Training Loss: {history['train_loss'][-1]:.4f}")
+    logger.info(f"Final Training Accuracy: {history['train_acc'][-1]:.4f}")
+    logger.info(f"Final Validation Loss: {history['val_loss'][-1]:.4f}")
+    logger.info(f"Final Validation Accuracy: {history['val_acc'][-1]:.4f}")
+    logger.info(f"Best Validation Accuracy: {max(history['val_acc']):.4f} "
+                f"(Epoch {history['val_acc'].index(max(history['val_acc'])) + 1})")
+    logger.info("=" * 70)
+    
+    logger.info("Training completed successfully!")
+
+
+if __name__ == '__main__':
+    main()
+
