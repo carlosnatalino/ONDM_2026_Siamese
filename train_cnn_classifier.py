@@ -180,7 +180,7 @@ class DASEventClassifier(nn.Module):
     - Dense layer size: 1024 (provides sufficient capacity for classification)
     """
     
-    def __init__(self, input_dim: int = 2048, num_classes: int = 9, use_sigmoid: bool = False):
+    def __init__(self, input_dim: int = 2048, num_classes: int = 9, use_sigmoid: bool = False, dropout: float = 0.5):
         """
         Initialize the CNN model.
         
@@ -188,12 +188,14 @@ class DASEventClassifier(nn.Module):
             input_dim: Input feature dimension (default: 2048 from paper)
             num_classes: Number of output classes (default: 9, actual dataset has 9 classes)
             use_sigmoid: If True, use Sigmoid activation (as in paper), else use ReLU (recommended)
+            dropout: Dropout rate for regularization (default: 0.5)
         """
         super(DASEventClassifier, self).__init__()
         
         self.input_dim = input_dim
         self.num_classes = num_classes
         self.use_sigmoid = use_sigmoid
+        self.dropout_rate = dropout
         
         # First convolutional block
         # Input: [batch, 1, 2048]
@@ -246,6 +248,11 @@ class DASEventClassifier(nn.Module):
             in_features=256 * 126,  # 32256 from paper/figure
             out_features=1024       # From paper/figure
         )
+        
+        # Dropout for regularization to prevent overfitting
+        # The model has 33M parameters and is prone to overfitting
+        # Dropout randomly sets some neurons to zero during training
+        self.dropout = nn.Dropout(p=self.dropout_rate)
         
         # Activation function
         # NOTE: The paper mentions Sigmoid, but this causes vanishing gradients.
@@ -324,6 +331,7 @@ class DASEventClassifier(nn.Module):
         # Fully connected layers
         x = self.fc1(x)           # [batch, 1024]
         x = self.activation(x)     # [batch, 1024] - ReLU or Sigmoid
+        x = self.dropout(x)        # [batch, 1024] - Dropout for regularization (only active during training)
         x = self.fc2(x)           # [batch, num_classes]
         
         return x
@@ -434,6 +442,7 @@ def train_model(
     weight_decay,
     device,
     class_weights=None,
+    early_stopping_patience=10,
     log_interval=50
 ):
     """
@@ -448,10 +457,11 @@ def train_model(
         weight_decay: Weight decay (L2 regularization)
         device: Device to run on
         class_weights: Optional class weights tensor for handling class imbalance
+        early_stopping_patience: Number of epochs to wait before early stopping
         log_interval: Interval for logging batch progress
         
     Returns:
-        Training history dictionary
+        Training history dictionary and best model state
     """
     # Loss function: CrossEntropyLoss includes Softmax
     # Use class weights if provided to handle class imbalance
@@ -481,6 +491,11 @@ def train_model(
     
     logger.info(f"Starting training for {num_epochs} epochs...")
     logger.info(f"Learning rate: {learning_rate}, Weight decay: {weight_decay}")
+    logger.info(f"Early stopping patience: {early_stopping_patience} epochs")
+    
+    best_val_acc = 0.0
+    best_model_state = None
+    epochs_without_improvement = 0
     
     for epoch in range(1, num_epochs + 1):
         # Train
@@ -499,12 +514,35 @@ def train_model(
         history['val_loss'].append(val_loss)
         history['val_acc'].append(val_acc)
         
+        # Early stopping: save best model and check for improvement
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            best_model_state = model.state_dict().copy()
+            epochs_without_improvement = 0
+            improvement_msg = " * BEST *"
+        else:
+            epochs_without_improvement += 1
+            improvement_msg = ""
+        
         # Log progress
         logger.info(
             f"Epoch [{epoch}/{num_epochs}] | "
             f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | "
-            f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}"
+            f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}{improvement_msg}"
         )
+        
+        # Early stopping
+        if epochs_without_improvement >= early_stopping_patience:
+            logger.info(
+                f"Early stopping triggered after {epoch} epochs. "
+                f"No improvement for {early_stopping_patience} epochs."
+            )
+            break
+    
+    # Load best model state
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+        logger.info(f"Loaded best model state (validation accuracy: {best_val_acc:.4f})")
     
     return history
 
@@ -560,10 +598,28 @@ def main():
         help='Random seed (default: 42)'
     )
     parser.add_argument(
+        '--val_size',
+        type=float,
+        default=0.1,
+        help='Validation set size (default: 0.1)'
+    )
+    parser.add_argument(
         '--test_size',
         type=float,
-        default=0.2,
-        help='Validation set size (default: 0.2)'
+        default=0.1,
+        help='Test set size (default: 0.1)'
+    )
+    parser.add_argument(
+        '--dropout',
+        type=float,
+        default=0.5,
+        help='Dropout rate for regularization (default: 0.5)'
+    )
+    parser.add_argument(
+        '--early_stopping_patience',
+        type=int,
+        default=10,
+        help='Early stopping patience (epochs without improvement, default: 10)'
     )
     
     args = parser.parse_args()
@@ -620,36 +676,48 @@ def main():
     logger.info(f"Class weights for handling imbalance: {class_weights.numpy()}")
     
     # ========================================================================
-    # Data Splitting
+    # Data Splitting: Train / Validation / Test
     # ========================================================================
     logger.info("=" * 70)
-    logger.info("Splitting dataset into train and validation sets...")
+    logger.info("Splitting dataset into train, validation, and test sets...")
     logger.info("=" * 70)
     
     # Convert one-hot to class indices for stratified split
     y_classes = np.argmax(y, axis=1)
     
-    X_train, X_val, Y_train, Y_val = train_test_split(
+    # First split: separate test set
+    # Paper uses 80:10:10 split (train:val:test)
+    test_size_actual = args.test_size
+    val_size_actual = args.val_size / (1 - test_size_actual)  # Adjust for two-stage split
+    
+    X_temp, X_test, Y_temp, Y_test = train_test_split(
         x, y,
-        test_size=args.test_size,
+        test_size=test_size_actual,
         random_state=args.seed,
         stratify=y_classes
     )
     
-    logger.info(f"Training samples: {len(X_train)}")
-    logger.info(f"Validation samples: {len(X_val)}")
+    # Second split: separate train and validation from remaining data
+    y_temp_classes = np.argmax(Y_temp, axis=1)
+    X_train, X_val, Y_train, Y_val = train_test_split(
+        X_temp, Y_temp,
+        test_size=val_size_actual,
+        random_state=args.seed,
+        stratify=y_temp_classes
+    )
+    
+    logger.info(f"Training samples: {len(X_train)} ({100*len(X_train)/len(x):.1f}%)")
+    logger.info(f"Validation samples: {len(X_val)} ({100*len(X_val)/len(x):.1f}%)")
+    logger.info(f"Test samples: {len(X_test)} ({100*len(X_test)/len(x):.1f}%)")
     
     # ========================================================================
     # Create DataLoaders
     # ========================================================================
-    # Normalize training data and use same normalization for validation
-    train_dataset = DASClassificationDataset(X_train, Y_train, normalize=True)
-    val_dataset = DASClassificationDataset(
-        X_val, Y_val, 
-        normalize=True, 
-        mean=train_dataset.mean, 
-        std=train_dataset.std
-    )
+    # Normalize training data and use same normalization for validation and test
+    complete_dataset = DASClassificationDataset(x, y, normalize=True)
+    train_dataset = DASClassificationDataset(X_train, Y_train, normalize=True, mean=complete_dataset.mean, std=complete_dataset.std)
+    val_dataset = DASClassificationDataset(X_val, Y_val, normalize=True, mean=complete_dataset.mean, std=complete_dataset.std)
+    test_dataset = DASClassificationDataset(X_test, Y_test, normalize=True, mean=complete_dataset.mean, std=complete_dataset.std)
     
     train_loader = DataLoader(
         train_dataset,
@@ -667,6 +735,14 @@ def main():
         pin_memory=True if torch.cuda.is_available() else False
     )
     
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True if torch.cuda.is_available() else False
+    )
+    
     # ========================================================================
     # Model Initialization
     # ========================================================================
@@ -677,7 +753,8 @@ def main():
     model = DASEventClassifier(
         input_dim=2048,      # From paper
         num_classes=num_classes,
-        use_sigmoid=args.use_sigmoid
+        use_sigmoid=args.use_sigmoid,
+        dropout=args.dropout
     ).to(device)
     
     # Count parameters
@@ -704,36 +781,61 @@ def main():
         learning_rate=args.lr,
         weight_decay=args.weight_decay,
         device=device,
-        class_weights=class_weights
+        class_weights=class_weights,
+        early_stopping_patience=args.early_stopping_patience
     )
     
     # ========================================================================
-    # Final Evaluation
+    # Final Evaluation on Validation Set
     # ========================================================================
     logger.info("=" * 70)
-    logger.info("Final evaluation...")
+    logger.info("Final evaluation on validation set...")
     logger.info("=" * 70)
     
     criterion = nn.CrossEntropyLoss()
-    val_loss, val_acc, predictions, targets = evaluate(
+    val_loss, val_acc, val_predictions, val_targets = evaluate(
         model, val_loader, criterion, device
     )
     
     logger.info(f"Final Validation Loss: {val_loss:.4f}")
     logger.info(f"Final Validation Accuracy: {val_acc:.4f}")
     
-    # Classification report
-    logger.info("\nClassification Report:")
+    # ========================================================================
+    # Test Set Evaluation
+    # ========================================================================
+    logger.info("=" * 70)
+    logger.info("Evaluating on held-out test set...")
+    logger.info("=" * 70)
+    
+    test_loss, test_acc, test_predictions, test_targets = evaluate(
+        model, test_loader, criterion, device
+    )
+    
+    logger.info(f"Test Loss: {test_loss:.4f}")
+    logger.info(f"Test Accuracy: {test_acc:.4f}")
+    
+    # Classification report on test set
+    logger.info("\nTest Set Classification Report:")
     logger.info("\n" + classification_report(
-        targets,
-        predictions,
+        test_targets,
+        test_predictions,
         target_names=parser_loader.encoder.classes_
     ))
     
-    # Confusion matrix
-    cm = confusion_matrix(targets, predictions)
-    logger.info("\nConfusion Matrix:")
-    logger.info(f"\n{cm}")
+    # Confusion matrix for test set
+    test_cm = confusion_matrix(test_targets, test_predictions)
+    logger.info("\nTest Set Confusion Matrix:")
+    logger.info(f"\n{test_cm}")
+    
+    # Also show validation set results for comparison
+    logger.info("\n" + "=" * 70)
+    logger.info("Validation Set Classification Report (for comparison):")
+    logger.info("=" * 70)
+    logger.info("\n" + classification_report(
+        val_targets,
+        val_predictions,
+        target_names=parser_loader.encoder.classes_
+    ))
     
     # ========================================================================
     # Plot Training History
@@ -780,6 +882,7 @@ def main():
     logger.info(f"Final Validation Accuracy: {history['val_acc'][-1]:.4f}")
     logger.info(f"Best Validation Accuracy: {max(history['val_acc']):.4f} "
                 f"(Epoch {history['val_acc'].index(max(history['val_acc'])) + 1})")
+    logger.info(f"Test Accuracy: {test_acc:.4f}")
     logger.info("=" * 70)
     
     logger.info("Training completed successfully!")
