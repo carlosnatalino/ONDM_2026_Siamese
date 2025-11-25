@@ -1,0 +1,323 @@
+2025-11-25 19:07:38,420 - __main__ - INFO - Random seed set to 42
+2025-11-25 19:07:38,441 - __main__ - INFO - Using CUDA: NVIDIA GeForce RTX 2080 Ti
+2025-11-25 19:07:38,441 - __main__ - INFO - ======================================================================
+2025-11-25 19:07:38,441 - __main__ - INFO - Loading and preprocessing dataset...
+2025-11-25 19:07:38,441 - __main__ - INFO - ======================================================================
+2025-11-25 19:07:38,510 - data_loader - INFO - Parsing dataset for label [walk]...
+2025-11-25 19:07:38,510 - data_loader - INFO - Parsing dataset for label [construction]...
+2025-11-25 19:07:38,510 - data_loader - INFO - Parsing dataset for label [longboard]...
+2025-11-25 19:07:38,511 - data_loader - INFO - Parsing dataset for label [regular]...
+2025-11-25 19:07:38,511 - data_loader - INFO - Parsing dataset for label [car]...
+2025-11-25 19:07:38,511 - data_loader - INFO - Parsing dataset for label [fence]...
+2025-11-25 19:07:38,511 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/walk/walking2_2023-04-17T122153+0100.h5
+2025-11-25 19:07:38,511 - data_loader - INFO - Parsing dataset for label [openclose]...
+2025-11-25 19:07:38,511 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/construction/reconstruction1_2023-06-06T150714+0100.h5
+2025-11-25 19:07:38,511 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/longboard/longboardroad_2023-04-17T123638+0100.h5
+2025-11-25 19:07:38,511 - data_loader - INFO - Parsing dataset for label [running]...
+2025-11-25 19:07:38,511 - data_loader - INFO - Parsing dataset for label [manipulation]...
+2025-11-25 19:07:38,511 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/regular/regularshit_2023-04-17T130103+0100.h5
+2025-11-25 19:07:38,511 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto2_2023-04-17T124510+0100.h5
+2025-11-25 19:07:38,511 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/fence/kopani_plot_2023-11-07T150207Z.h5
+2025-11-25 19:07:38,511 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/openclose/openingclosing_2023-04-17T122658+0100.h5
+2025-11-25 19:07:38,512 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/running/running_2023-04-17T122413+0100.h5
+2025-11-25 19:07:38,512 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/manipulation/manipulation_2023-04-17T122847+0100.h5
+2025-11-25 19:07:39,215 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto4_2023-06-06T145055+0100.h5
+2025-11-25 19:07:39,837 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/longboard/longboard_2023-04-17T123543+0100.h5
+2025-11-25 19:07:39,925 - data_loader - WARNING - Total samples extracted for openclose: 6792
+2025-11-25 19:07:42,225 - data_loader - WARNING - Total samples extracted for longboard: 15367
+2025-11-25 19:07:42,415 - data_loader - WARNING - Total samples extracted for running: 13877
+2025-11-25 19:07:42,785 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/walk/walking_2023-04-17T121933+0100.h5
+2025-11-25 19:07:43,019 - data_loader - WARNING - Total samples extracted for manipulation: 17710
+2025-11-25 19:07:43,879 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/fence/fence_2023-04-17T123117+0100.h5
+2025-11-25 19:07:44,025 - data_loader - WARNING - Total samples extracted for walk: 19155
+2025-11-25 19:07:44,180 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/fence/plot_2023-11-07T150119Z.h5
+2025-11-25 19:07:45,560 - data_loader - WARNING - Total samples extracted for regular: 4201
+2025-11-25 19:07:47,754 - data_loader - WARNING - Total samples extracted for fence: 43981
+2025-11-25 19:07:47,756 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto_2023-04-17T124152+0100.h5
+2025-11-25 19:07:49,879 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto4_2023-06-06T144655+0100.h5
+2025-11-25 19:07:50,721 - data_loader - WARNING - Total samples extracted for construction: 54832
+2025-11-25 19:07:51,694 - data_loader - WARNING - Total samples extracted for car: 58017
+2025-11-25 19:08:00,284 - data_loader - INFO - Applying preprocessing transformation to dataset...
+2025-11-25 19:08:01,738 - data_loader - INFO - Applying preprocessing function: <function fft at 0x7f3823203a60>
+2025-11-25 19:08:18,412 - data_loader - INFO - Filtering out noisy samples...
+2025-11-25 19:08:45,813 - data_loader - INFO - Encoding labels...
+2025-11-25 19:08:45,864 - data_loader - WARNING - Sample counts per category: Counter({'construction': 29169, 'car': 20957, 'manipulation': 17223, 'running': 12927, 'walk': 12714, 'longboard': 11908, 'openclose': 5943, 'regular': 4201, 'fence': 3600})
+/home/carda/projects/2026-ICMLCN-Siamese/venv/lib/python3.13/site-packages/sklearn/preprocessing/_label.py:110: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+  y = column_or_1d(y, warn=True)
+2025-11-25 19:08:45,943 - data_loader - WARNING - Computed class weights: [0.62902345 0.45193337 3.66179012 1.10702422 0.76539769 2.21814647
+ 3.13793012 1.01976054 1.03684477]
+2025-11-25 19:08:46,002 - data_loader - WARNING - Label encoding complete: ['car' 'construction' 'fence' 'longboard' 'manipulation' 'openclose'
+ 'regular' 'running' 'walk']
+2025-11-25 19:08:46,436 - __main__ - INFO - Dataset loaded: 118642 samples
+2025-11-25 19:08:46,436 - __main__ - INFO - Feature shape: (118642, 2048)
+2025-11-25 19:08:46,436 - __main__ - INFO - Label shape: (118642, 9)
+2025-11-25 19:08:46,436 - __main__ - INFO - Number of classes: 9
+2025-11-25 19:08:46,437 - __main__ - INFO - Class names: ['car' 'construction' 'fence' 'longboard' 'manipulation' 'openclose'
+ 'regular' 'running' 'walk']
+2025-11-25 19:08:46,438 - __main__ - INFO - Class weights for handling imbalance: [0.62902343 0.45193338 3.6617901  1.1070242  0.76539767 2.2181466
+ 3.1379302  1.0197605  1.0368447 ]
+2025-11-25 19:08:46,438 - __main__ - INFO - ======================================================================
+2025-11-25 19:08:46,438 - __main__ - INFO - Splitting dataset into train, validation, and test sets...
+2025-11-25 19:08:46,438 - __main__ - INFO - ======================================================================
+2025-11-25 19:08:46,910 - __main__ - INFO - Training samples: 94912 (80.0%)
+2025-11-25 19:08:46,910 - __main__ - INFO - Validation samples: 11865 (10.0%)
+2025-11-25 19:08:46,910 - __main__ - INFO - Test samples: 11865 (10.0%)
+2025-11-25 19:08:48,239 - __main__ - INFO - ======================================================================
+2025-11-25 19:08:48,239 - __main__ - INFO - Initializing model...
+2025-11-25 19:08:48,239 - __main__ - INFO - ======================================================================
+2025-11-25 19:08:49,211 - __main__ - INFO - Model architecture:
+2025-11-25 19:08:49,211 - __main__ - INFO - DASEventClassifier(
+  (conv1): Conv1d(1, 64, kernel_size=(7,), stride=(1,))
+  (leaky_relu1): LeakyReLU(negative_slope=0.01)
+  (pool1): MaxPool1d(kernel_size=4, stride=4, padding=0, dilation=1, ceil_mode=False)
+  (dropout1): Dropout(p=0.25, inplace=False)
+  (conv2): Conv1d(64, 256, kernel_size=(7,), stride=(1,))
+  (leaky_relu2): LeakyReLU(negative_slope=0.01)
+  (pool2): MaxPool1d(kernel_size=4, stride=4, padding=0, dilation=1, ceil_mode=False)
+  (dropout2): Dropout(p=0.25, inplace=False)
+  (flatten): Flatten(start_dim=1, end_dim=-1)
+  (fc1): Linear(in_features=32256, out_features=1024, bias=True)
+  (dropout_fc1): Dropout(p=0.25, inplace=False)
+  (activation): ReLU()
+  (fc2): Linear(in_features=1024, out_features=9, bias=True)
+)
+2025-11-25 19:08:49,211 - __main__ - INFO - Total parameters: 33,155,849
+2025-11-25 19:08:49,211 - __main__ - INFO - Trainable parameters: 33,155,849
+2025-11-25 19:08:49,211 - __main__ - INFO - ======================================================================
+2025-11-25 19:08:49,211 - __main__ - INFO - Starting training...
+2025-11-25 19:08:49,211 - __main__ - INFO - ======================================================================
+2025-11-25 19:08:49,212 - __main__ - INFO - Using class weights: [0.62902343 0.45193338 3.6617901  1.1070242  0.76539767 2.2181466
+ 3.1379302  1.0197605  1.0368447 ]
+2025-11-25 19:08:49,975 - __main__ - INFO - Starting training for 200 epochs...
+2025-11-25 19:08:49,975 - __main__ - INFO - Learning rate: 0.0001, Weight decay: 0.0001
+2025-11-25 19:08:49,975 - __main__ - INFO - Early stopping patience: 25 epochs
+2025-11-25 19:09:02,377 - __main__ - INFO - Epoch [1/200] | Train Loss: 1.9538 | Train Acc: 0.3359 | Val Loss: 1.3893 | Val Acc: 0.4356 * BEST *
+2025-11-25 19:09:14,575 - __main__ - INFO - Epoch [2/200] | Train Loss: 1.3202 | Train Acc: 0.4421 | Val Loss: 1.2722 | Val Acc: 0.4880 * BEST *
+2025-11-25 19:09:26,900 - __main__ - INFO - Epoch [3/200] | Train Loss: 1.2341 | Train Acc: 0.4744 | Val Loss: 1.2476 | Val Acc: 0.4995 * BEST *
+2025-11-25 19:09:39,790 - __main__ - INFO - Epoch [4/200] | Train Loss: 1.1850 | Train Acc: 0.4891 | Val Loss: 1.2154 | Val Acc: 0.4995 * BEST *
+2025-11-25 19:09:52,911 - __main__ - INFO - Epoch [5/200] | Train Loss: 1.1524 | Train Acc: 0.5008 | Val Loss: 1.1863 | Val Acc: 0.5119 * BEST *
+2025-11-25 19:10:06,231 - __main__ - INFO - Epoch [6/200] | Train Loss: 1.1196 | Train Acc: 0.5169 | Val Loss: 1.1765 | Val Acc: 0.5354 * BEST *
+2025-11-25 19:10:19,797 - __main__ - INFO - Epoch [7/200] | Train Loss: 1.0911 | Train Acc: 0.5332 | Val Loss: 1.1383 | Val Acc: 0.5534 * BEST *
+2025-11-25 19:10:33,786 - __main__ - INFO - Epoch [8/200] | Train Loss: 1.0634 | Train Acc: 0.5451 | Val Loss: 1.1193 | Val Acc: 0.5843 * BEST *
+2025-11-25 19:10:47,581 - __main__ - INFO - Epoch [9/200] | Train Loss: 1.0317 | Train Acc: 0.5654 | Val Loss: 1.0860 | Val Acc: 0.5904 * BEST *
+2025-11-25 19:11:01,608 - __main__ - INFO - Epoch [10/200] | Train Loss: 0.9964 | Train Acc: 0.5842 | Val Loss: 1.0593 | Val Acc: 0.6014 * BEST *
+2025-11-25 19:11:15,815 - __main__ - INFO - Epoch [11/200] | Train Loss: 0.9659 | Train Acc: 0.6008 | Val Loss: 1.0176 | Val Acc: 0.6131 * BEST *
+2025-11-25 19:11:30,080 - __main__ - INFO - Epoch [12/200] | Train Loss: 0.9397 | Train Acc: 0.6108 | Val Loss: 1.0104 | Val Acc: 0.6251 * BEST *
+2025-11-25 19:11:44,483 - __main__ - INFO - Epoch [13/200] | Train Loss: 0.9100 | Train Acc: 0.6226 | Val Loss: 0.9884 | Val Acc: 0.6367 * BEST *
+2025-11-25 19:11:59,046 - __main__ - INFO - Epoch [14/200] | Train Loss: 0.8888 | Train Acc: 0.6307 | Val Loss: 0.9782 | Val Acc: 0.6466 * BEST *
+2025-11-25 19:12:13,731 - __main__ - INFO - Epoch [15/200] | Train Loss: 0.8620 | Train Acc: 0.6410 | Val Loss: 0.9649 | Val Acc: 0.6360
+2025-11-25 19:12:28,452 - __main__ - INFO - Epoch [16/200] | Train Loss: 0.8445 | Train Acc: 0.6487 | Val Loss: 0.9844 | Val Acc: 0.6450
+2025-11-25 19:12:43,294 - __main__ - INFO - Epoch [17/200] | Train Loss: 0.8179 | Train Acc: 0.6564 | Val Loss: 0.9620 | Val Acc: 0.6589 * BEST *
+2025-11-25 19:12:58,352 - __main__ - INFO - Epoch [18/200] | Train Loss: 0.7941 | Train Acc: 0.6661 | Val Loss: 0.9210 | Val Acc: 0.6534
+2025-11-25 19:13:13,502 - __main__ - INFO - Epoch [19/200] | Train Loss: 0.7755 | Train Acc: 0.6711 | Val Loss: 0.9332 | Val Acc: 0.6588
+2025-11-25 19:13:28,723 - __main__ - INFO - Epoch [20/200] | Train Loss: 0.7549 | Train Acc: 0.6796 | Val Loss: 0.9454 | Val Acc: 0.6646 * BEST *
+2025-11-25 19:13:44,072 - __main__ - INFO - Epoch [21/200] | Train Loss: 0.7302 | Train Acc: 0.6865 | Val Loss: 0.9264 | Val Acc: 0.6668 * BEST *
+2025-11-25 19:13:59,530 - __main__ - INFO - Epoch [22/200] | Train Loss: 0.7144 | Train Acc: 0.6921 | Val Loss: 0.9269 | Val Acc: 0.6742 * BEST *
+2025-11-25 19:14:15,291 - __main__ - INFO - Epoch [23/200] | Train Loss: 0.6949 | Train Acc: 0.7018 | Val Loss: 0.8972 | Val Acc: 0.6761 * BEST *
+2025-11-25 19:14:31,072 - __main__ - INFO - Epoch [24/200] | Train Loss: 0.6766 | Train Acc: 0.7066 | Val Loss: 0.9347 | Val Acc: 0.6712
+2025-11-25 19:14:46,737 - __main__ - INFO - Epoch [25/200] | Train Loss: 0.6586 | Train Acc: 0.7128 | Val Loss: 0.9148 | Val Acc: 0.6849 * BEST *
+2025-11-25 19:15:02,631 - __main__ - INFO - Epoch [26/200] | Train Loss: 0.6389 | Train Acc: 0.7206 | Val Loss: 0.8924 | Val Acc: 0.6872 * BEST *
+2025-11-25 19:15:18,519 - __main__ - INFO - Epoch [27/200] | Train Loss: 0.6284 | Train Acc: 0.7218 | Val Loss: 0.8706 | Val Acc: 0.6866
+2025-11-25 19:15:34,369 - __main__ - INFO - Epoch [28/200] | Train Loss: 0.6070 | Train Acc: 0.7327 | Val Loss: 0.8796 | Val Acc: 0.6904 * BEST *
+2025-11-25 19:15:50,175 - __main__ - INFO - Epoch [29/200] | Train Loss: 0.5910 | Train Acc: 0.7375 | Val Loss: 0.8826 | Val Acc: 0.6984 * BEST *
+2025-11-25 19:16:06,194 - __main__ - INFO - Epoch [30/200] | Train Loss: 0.5724 | Train Acc: 0.7449 | Val Loss: 0.9353 | Val Acc: 0.6959
+2025-11-25 19:16:22,253 - __main__ - INFO - Epoch [31/200] | Train Loss: 0.5553 | Train Acc: 0.7502 | Val Loss: 0.8940 | Val Acc: 0.6955
+2025-11-25 19:16:38,313 - __main__ - INFO - Epoch [32/200] | Train Loss: 0.5444 | Train Acc: 0.7552 | Val Loss: 0.8683 | Val Acc: 0.7039 * BEST *
+2025-11-25 19:16:54,644 - __main__ - INFO - Epoch [33/200] | Train Loss: 0.5323 | Train Acc: 0.7599 | Val Loss: 0.8578 | Val Acc: 0.7080 * BEST *
+2025-11-25 19:17:11,244 - __main__ - INFO - Epoch [34/200] | Train Loss: 0.5170 | Train Acc: 0.7667 | Val Loss: 0.8643 | Val Acc: 0.7051
+2025-11-25 19:17:27,791 - __main__ - INFO - Epoch [35/200] | Train Loss: 0.5039 | Train Acc: 0.7711 | Val Loss: 0.8900 | Val Acc: 0.7123 * BEST *
+2025-11-25 19:17:44,644 - __main__ - INFO - Epoch [36/200] | Train Loss: 0.4863 | Train Acc: 0.7792 | Val Loss: 0.8962 | Val Acc: 0.7103
+2025-11-25 19:18:01,256 - __main__ - INFO - Epoch [37/200] | Train Loss: 0.4799 | Train Acc: 0.7807 | Val Loss: 0.8576 | Val Acc: 0.7160 * BEST *
+2025-11-25 19:18:18,206 - __main__ - INFO - Epoch [38/200] | Train Loss: 0.4625 | Train Acc: 0.7867 | Val Loss: 0.8519 | Val Acc: 0.7162 * BEST *
+2025-11-25 19:18:35,048 - __main__ - INFO - Epoch [39/200] | Train Loss: 0.4521 | Train Acc: 0.7919 | Val Loss: 0.8900 | Val Acc: 0.7198 * BEST *
+2025-11-25 19:18:51,865 - __main__ - INFO - Epoch [40/200] | Train Loss: 0.4396 | Train Acc: 0.7961 | Val Loss: 0.8605 | Val Acc: 0.7120
+2025-11-25 19:19:08,516 - __main__ - INFO - Epoch [41/200] | Train Loss: 0.4292 | Train Acc: 0.8007 | Val Loss: 0.9102 | Val Acc: 0.7202 * BEST *
+2025-11-25 19:19:25,373 - __main__ - INFO - Epoch [42/200] | Train Loss: 0.4215 | Train Acc: 0.8045 | Val Loss: 0.8680 | Val Acc: 0.7187
+2025-11-25 19:19:42,188 - __main__ - INFO - Epoch [43/200] | Train Loss: 0.4107 | Train Acc: 0.8092 | Val Loss: 0.9332 | Val Acc: 0.7286 * BEST *
+2025-11-25 19:19:58,995 - __main__ - INFO - Epoch [44/200] | Train Loss: 0.3991 | Train Acc: 0.8124 | Val Loss: 0.9322 | Val Acc: 0.7249
+2025-11-25 19:20:16,003 - __main__ - INFO - Epoch [45/200] | Train Loss: 0.3846 | Train Acc: 0.8181 | Val Loss: 0.9223 | Val Acc: 0.7259
+2025-11-25 19:20:32,789 - __main__ - INFO - Epoch [46/200] | Train Loss: 0.3801 | Train Acc: 0.8225 | Val Loss: 0.8801 | Val Acc: 0.7274
+2025-11-25 19:20:49,720 - __main__ - INFO - Epoch [47/200] | Train Loss: 0.3711 | Train Acc: 0.8258 | Val Loss: 0.8827 | Val Acc: 0.7214
+2025-11-25 19:21:06,657 - __main__ - INFO - Epoch [48/200] | Train Loss: 0.3600 | Train Acc: 0.8308 | Val Loss: 0.9175 | Val Acc: 0.7313 * BEST *
+2025-11-25 19:21:23,918 - __main__ - INFO - Epoch [49/200] | Train Loss: 0.3541 | Train Acc: 0.8333 | Val Loss: 0.8853 | Val Acc: 0.7314 * BEST *
+2025-11-25 19:21:40,863 - __main__ - INFO - Epoch [50/200] | Train Loss: 0.3466 | Train Acc: 0.8356 | Val Loss: 0.9416 | Val Acc: 0.7286
+2025-11-25 19:22:00,296 - __main__ - INFO - Epoch [51/200] | Train Loss: 0.3374 | Train Acc: 0.8396 | Val Loss: 0.9295 | Val Acc: 0.7321 * BEST *
+2025-11-25 19:22:20,792 - __main__ - INFO - Epoch [52/200] | Train Loss: 0.3282 | Train Acc: 0.8443 | Val Loss: 0.9212 | Val Acc: 0.7356 * BEST *
+2025-11-25 19:22:41,495 - __main__ - INFO - Epoch [53/200] | Train Loss: 0.3209 | Train Acc: 0.8481 | Val Loss: 0.9217 | Val Acc: 0.7343
+2025-11-25 19:23:02,342 - __main__ - INFO - Epoch [54/200] | Train Loss: 0.3141 | Train Acc: 0.8510 | Val Loss: 0.9548 | Val Acc: 0.7381 * BEST *
+2025-11-25 19:23:23,652 - __main__ - INFO - Epoch [55/200] | Train Loss: 0.3072 | Train Acc: 0.8553 | Val Loss: 0.9163 | Val Acc: 0.7349
+2025-11-25 19:23:44,738 - __main__ - INFO - Epoch [56/200] | Train Loss: 0.2995 | Train Acc: 0.8582 | Val Loss: 0.9236 | Val Acc: 0.7386 * BEST *
+2025-11-25 19:24:05,586 - __main__ - INFO - Epoch [57/200] | Train Loss: 0.2928 | Train Acc: 0.8620 | Val Loss: 0.9282 | Val Acc: 0.7349
+2025-11-25 19:24:26,891 - __main__ - INFO - Epoch [58/200] | Train Loss: 0.2892 | Train Acc: 0.8633 | Val Loss: 0.9294 | Val Acc: 0.7342
+2025-11-25 19:24:47,970 - __main__ - INFO - Epoch [59/200] | Train Loss: 0.2807 | Train Acc: 0.8666 | Val Loss: 0.9584 | Val Acc: 0.7384
+2025-11-25 19:25:08,967 - __main__ - INFO - Epoch [60/200] | Train Loss: 0.2773 | Train Acc: 0.8690 | Val Loss: 1.0030 | Val Acc: 0.7340
+2025-11-25 19:25:29,694 - __main__ - INFO - Epoch [61/200] | Train Loss: 0.2653 | Train Acc: 0.8736 | Val Loss: 0.9677 | Val Acc: 0.7406 * BEST *
+2025-11-25 19:25:47,925 - __main__ - INFO - Epoch [62/200] | Train Loss: 0.2626 | Train Acc: 0.8760 | Val Loss: 0.9456 | Val Acc: 0.7375
+2025-11-25 19:26:05,947 - __main__ - INFO - Epoch [63/200] | Train Loss: 0.2556 | Train Acc: 0.8796 | Val Loss: 0.9712 | Val Acc: 0.7340
+2025-11-25 19:26:23,694 - __main__ - INFO - Epoch [64/200] | Train Loss: 0.2516 | Train Acc: 0.8801 | Val Loss: 0.9747 | Val Acc: 0.7415 * BEST *
+2025-11-25 19:26:41,672 - __main__ - INFO - Epoch [65/200] | Train Loss: 0.2492 | Train Acc: 0.8825 | Val Loss: 0.9568 | Val Acc: 0.7426 * BEST *
+2025-11-25 19:26:59,406 - __main__ - INFO - Epoch [66/200] | Train Loss: 0.2382 | Train Acc: 0.8864 | Val Loss: 0.9773 | Val Acc: 0.7393
+2025-11-25 19:27:17,155 - __main__ - INFO - Epoch [67/200] | Train Loss: 0.2386 | Train Acc: 0.8879 | Val Loss: 0.9518 | Val Acc: 0.7406
+2025-11-25 19:27:34,825 - __main__ - INFO - Epoch [68/200] | Train Loss: 0.2361 | Train Acc: 0.8888 | Val Loss: 0.9619 | Val Acc: 0.7448 * BEST *
+2025-11-25 19:27:52,942 - __main__ - INFO - Epoch [69/200] | Train Loss: 0.2311 | Train Acc: 0.8929 | Val Loss: 0.9748 | Val Acc: 0.7411
+2025-11-25 19:28:10,591 - __main__ - INFO - Epoch [70/200] | Train Loss: 0.2214 | Train Acc: 0.8950 | Val Loss: 0.9840 | Val Acc: 0.7443
+2025-11-25 19:28:28,200 - __main__ - INFO - Epoch [71/200] | Train Loss: 0.2217 | Train Acc: 0.8958 | Val Loss: 0.9738 | Val Acc: 0.7404
+2025-11-25 19:28:46,014 - __main__ - INFO - Epoch [72/200] | Train Loss: 0.2187 | Train Acc: 0.8984 | Val Loss: 0.9632 | Val Acc: 0.7442
+2025-11-25 19:29:03,644 - __main__ - INFO - Epoch [73/200] | Train Loss: 0.2137 | Train Acc: 0.9001 | Val Loss: 1.0084 | Val Acc: 0.7396
+2025-11-25 19:29:21,434 - __main__ - INFO - Epoch [74/200] | Train Loss: 0.2077 | Train Acc: 0.9013 | Val Loss: 1.0545 | Val Acc: 0.7418
+2025-11-25 19:29:38,997 - __main__ - INFO - Epoch [75/200] | Train Loss: 0.2043 | Train Acc: 0.9037 | Val Loss: 0.9945 | Val Acc: 0.7481 * BEST *
+2025-11-25 19:29:56,891 - __main__ - INFO - Epoch [76/200] | Train Loss: 0.2012 | Train Acc: 0.9063 | Val Loss: 0.9771 | Val Acc: 0.7438
+2025-11-25 19:30:14,744 - __main__ - INFO - Epoch [77/200] | Train Loss: 0.1992 | Train Acc: 0.9076 | Val Loss: 1.0163 | Val Acc: 0.7495 * BEST *
+2025-11-25 19:30:32,790 - __main__ - INFO - Epoch [78/200] | Train Loss: 0.1937 | Train Acc: 0.9095 | Val Loss: 0.9970 | Val Acc: 0.7507 * BEST *
+2025-11-25 19:30:50,982 - __main__ - INFO - Epoch [79/200] | Train Loss: 0.1900 | Train Acc: 0.9103 | Val Loss: 1.0195 | Val Acc: 0.7482
+2025-11-25 19:31:08,781 - __main__ - INFO - Epoch [80/200] | Train Loss: 0.1880 | Train Acc: 0.9117 | Val Loss: 0.9955 | Val Acc: 0.7487
+2025-11-25 19:31:26,878 - __main__ - INFO - Epoch [81/200] | Train Loss: 0.1889 | Train Acc: 0.9122 | Val Loss: 1.0147 | Val Acc: 0.7533 * BEST *
+2025-11-25 19:31:45,034 - __main__ - INFO - Epoch [82/200] | Train Loss: 0.1847 | Train Acc: 0.9138 | Val Loss: 1.0451 | Val Acc: 0.7545 * BEST *
+2025-11-25 19:32:03,284 - __main__ - INFO - Epoch [83/200] | Train Loss: 0.1818 | Train Acc: 0.9159 | Val Loss: 0.9996 | Val Acc: 0.7454
+2025-11-25 19:32:21,687 - __main__ - INFO - Epoch [84/200] | Train Loss: 0.1795 | Train Acc: 0.9169 | Val Loss: 1.0309 | Val Acc: 0.7473
+2025-11-25 19:32:39,650 - __main__ - INFO - Epoch [85/200] | Train Loss: 0.1743 | Train Acc: 0.9180 | Val Loss: 1.0037 | Val Acc: 0.7509
+2025-11-25 19:32:57,770 - __main__ - INFO - Epoch [86/200] | Train Loss: 0.1737 | Train Acc: 0.9208 | Val Loss: 1.0423 | Val Acc: 0.7520
+2025-11-25 19:33:16,002 - __main__ - INFO - Epoch [87/200] | Train Loss: 0.1717 | Train Acc: 0.9215 | Val Loss: 1.0508 | Val Acc: 0.7484
+2025-11-25 19:33:34,071 - __main__ - INFO - Epoch [88/200] | Train Loss: 0.1660 | Train Acc: 0.9234 | Val Loss: 1.0587 | Val Acc: 0.7544
+2025-11-25 19:33:52,244 - __main__ - INFO - Epoch [89/200] | Train Loss: 0.1651 | Train Acc: 0.9255 | Val Loss: 1.0631 | Val Acc: 0.7537
+2025-11-25 19:34:10,498 - __main__ - INFO - Epoch [90/200] | Train Loss: 0.1605 | Train Acc: 0.9261 | Val Loss: 0.9932 | Val Acc: 0.7569 * BEST *
+2025-11-25 19:34:28,514 - __main__ - INFO - Epoch [91/200] | Train Loss: 0.1606 | Train Acc: 0.9258 | Val Loss: 1.0443 | Val Acc: 0.7526
+2025-11-25 19:34:46,070 - __main__ - INFO - Epoch [92/200] | Train Loss: 0.1581 | Train Acc: 0.9281 | Val Loss: 1.0149 | Val Acc: 0.7462
+2025-11-25 19:35:03,722 - __main__ - INFO - Epoch [93/200] | Train Loss: 0.1583 | Train Acc: 0.9273 | Val Loss: 1.0051 | Val Acc: 0.7531
+2025-11-25 19:35:21,388 - __main__ - INFO - Epoch [94/200] | Train Loss: 0.1524 | Train Acc: 0.9307 | Val Loss: 1.0502 | Val Acc: 0.7536
+2025-11-25 19:35:39,301 - __main__ - INFO - Epoch [95/200] | Train Loss: 0.1505 | Train Acc: 0.9301 | Val Loss: 1.0582 | Val Acc: 0.7523
+2025-11-25 19:35:57,067 - __main__ - INFO - Epoch [96/200] | Train Loss: 0.1497 | Train Acc: 0.9325 | Val Loss: 1.0941 | Val Acc: 0.7532
+2025-11-25 19:36:14,813 - __main__ - INFO - Epoch [97/200] | Train Loss: 0.1504 | Train Acc: 0.9309 | Val Loss: 1.0404 | Val Acc: 0.7542
+2025-11-25 19:36:32,589 - __main__ - INFO - Epoch [98/200] | Train Loss: 0.1483 | Train Acc: 0.9327 | Val Loss: 1.0592 | Val Acc: 0.7558
+2025-11-25 19:36:50,433 - __main__ - INFO - Epoch [99/200] | Train Loss: 0.1455 | Train Acc: 0.9344 | Val Loss: 1.0311 | Val Acc: 0.7547
+2025-11-25 19:37:08,080 - __main__ - INFO - Epoch [100/200] | Train Loss: 0.1436 | Train Acc: 0.9342 | Val Loss: 1.0848 | Val Acc: 0.7583 * BEST *
+2025-11-25 19:37:25,611 - __main__ - INFO - Epoch [101/200] | Train Loss: 0.1447 | Train Acc: 0.9353 | Val Loss: 1.0161 | Val Acc: 0.7544
+2025-11-25 19:37:43,482 - __main__ - INFO - Epoch [102/200] | Train Loss: 0.1391 | Train Acc: 0.9370 | Val Loss: 1.0287 | Val Acc: 0.7591 * BEST *
+2025-11-25 19:38:01,269 - __main__ - INFO - Epoch [103/200] | Train Loss: 0.1389 | Train Acc: 0.9371 | Val Loss: 1.1225 | Val Acc: 0.7571
+2025-11-25 19:38:19,293 - __main__ - INFO - Epoch [104/200] | Train Loss: 0.1374 | Train Acc: 0.9376 | Val Loss: 1.0682 | Val Acc: 0.7601 * BEST *
+2025-11-25 19:38:37,346 - __main__ - INFO - Epoch [105/200] | Train Loss: 0.1384 | Train Acc: 0.9369 | Val Loss: 1.0395 | Val Acc: 0.7563
+2025-11-25 19:38:55,361 - __main__ - INFO - Epoch [106/200] | Train Loss: 0.1322 | Train Acc: 0.9396 | Val Loss: 1.0852 | Val Acc: 0.7594
+2025-11-25 19:39:13,521 - __main__ - INFO - Epoch [107/200] | Train Loss: 0.1340 | Train Acc: 0.9386 | Val Loss: 1.0560 | Val Acc: 0.7611 * BEST *
+2025-11-25 19:39:31,882 - __main__ - INFO - Epoch [108/200] | Train Loss: 0.1316 | Train Acc: 0.9406 | Val Loss: 1.0207 | Val Acc: 0.7556
+2025-11-25 19:39:50,003 - __main__ - INFO - Epoch [109/200] | Train Loss: 0.1284 | Train Acc: 0.9422 | Val Loss: 1.0906 | Val Acc: 0.7591
+2025-11-25 19:40:08,275 - __main__ - INFO - Epoch [110/200] | Train Loss: 0.1295 | Train Acc: 0.9424 | Val Loss: 1.0694 | Val Acc: 0.7565
+2025-11-25 19:40:26,461 - __main__ - INFO - Epoch [111/200] | Train Loss: 0.1268 | Train Acc: 0.9433 | Val Loss: 1.1304 | Val Acc: 0.7592
+2025-11-25 19:40:44,580 - __main__ - INFO - Epoch [112/200] | Train Loss: 0.1267 | Train Acc: 0.9432 | Val Loss: 1.1123 | Val Acc: 0.7602
+2025-11-25 19:41:02,981 - __main__ - INFO - Epoch [113/200] | Train Loss: 0.1256 | Train Acc: 0.9435 | Val Loss: 1.0669 | Val Acc: 0.7634 * BEST *
+2025-11-25 19:41:21,173 - __main__ - INFO - Epoch [114/200] | Train Loss: 0.1234 | Train Acc: 0.9447 | Val Loss: 1.0854 | Val Acc: 0.7601
+2025-11-25 19:41:38,825 - __main__ - INFO - Epoch [115/200] | Train Loss: 0.1234 | Train Acc: 0.9448 | Val Loss: 1.0789 | Val Acc: 0.7581
+2025-11-25 19:41:57,039 - __main__ - INFO - Epoch [116/200] | Train Loss: 0.1222 | Train Acc: 0.9464 | Val Loss: 1.1145 | Val Acc: 0.7568
+2025-11-25 19:42:14,896 - __main__ - INFO - Epoch [117/200] | Train Loss: 0.1190 | Train Acc: 0.9465 | Val Loss: 1.0886 | Val Acc: 0.7606
+2025-11-25 19:42:33,027 - __main__ - INFO - Epoch [118/200] | Train Loss: 0.1192 | Train Acc: 0.9466 | Val Loss: 1.0950 | Val Acc: 0.7602
+2025-11-25 19:42:50,787 - __main__ - INFO - Epoch [119/200] | Train Loss: 0.1193 | Train Acc: 0.9467 | Val Loss: 1.1430 | Val Acc: 0.7589
+2025-11-25 19:43:08,893 - __main__ - INFO - Epoch [120/200] | Train Loss: 0.1179 | Train Acc: 0.9480 | Val Loss: 1.0691 | Val Acc: 0.7608
+2025-11-25 19:43:26,617 - __main__ - INFO - Epoch [121/200] | Train Loss: 0.1173 | Train Acc: 0.9481 | Val Loss: 1.1491 | Val Acc: 0.7552
+2025-11-25 19:43:44,925 - __main__ - INFO - Epoch [122/200] | Train Loss: 0.1152 | Train Acc: 0.9493 | Val Loss: 1.1024 | Val Acc: 0.7600
+2025-11-25 19:44:02,744 - __main__ - INFO - Epoch [123/200] | Train Loss: 0.1154 | Train Acc: 0.9495 | Val Loss: 1.1492 | Val Acc: 0.7617
+2025-11-25 19:44:20,604 - __main__ - INFO - Epoch [124/200] | Train Loss: 0.1139 | Train Acc: 0.9494 | Val Loss: 1.0862 | Val Acc: 0.7530
+2025-11-25 19:44:38,419 - __main__ - INFO - Epoch [125/200] | Train Loss: 0.1125 | Train Acc: 0.9500 | Val Loss: 1.1048 | Val Acc: 0.7635 * BEST *
+2025-11-25 19:44:56,269 - __main__ - INFO - Epoch [126/200] | Train Loss: 0.1100 | Train Acc: 0.9513 | Val Loss: 1.1046 | Val Acc: 0.7618
+2025-11-25 19:45:14,047 - __main__ - INFO - Epoch [127/200] | Train Loss: 0.1100 | Train Acc: 0.9509 | Val Loss: 1.0244 | Val Acc: 0.7578
+2025-11-25 19:45:31,843 - __main__ - INFO - Epoch [128/200] | Train Loss: 0.1107 | Train Acc: 0.9503 | Val Loss: 1.0849 | Val Acc: 0.7628
+2025-11-25 19:45:49,941 - __main__ - INFO - Epoch [129/200] | Train Loss: 0.1084 | Train Acc: 0.9524 | Val Loss: 1.1483 | Val Acc: 0.7618
+2025-11-25 19:46:07,913 - __main__ - INFO - Epoch [130/200] | Train Loss: 0.1079 | Train Acc: 0.9523 | Val Loss: 1.0453 | Val Acc: 0.7627
+2025-11-25 19:46:26,140 - __main__ - INFO - Epoch [131/200] | Train Loss: 0.1080 | Train Acc: 0.9533 | Val Loss: 1.0611 | Val Acc: 0.7599
+2025-11-25 19:46:44,033 - __main__ - INFO - Epoch [132/200] | Train Loss: 0.1068 | Train Acc: 0.9524 | Val Loss: 1.0935 | Val Acc: 0.7569
+2025-11-25 19:47:02,641 - __main__ - INFO - Epoch [133/200] | Train Loss: 0.1047 | Train Acc: 0.9528 | Val Loss: 1.0837 | Val Acc: 0.7610
+2025-11-25 19:47:20,686 - __main__ - INFO - Epoch [134/200] | Train Loss: 0.1064 | Train Acc: 0.9528 | Val Loss: 1.0961 | Val Acc: 0.7591
+2025-11-25 19:47:39,016 - __main__ - INFO - Epoch [135/200] | Train Loss: 0.1035 | Train Acc: 0.9547 | Val Loss: 1.0500 | Val Acc: 0.7571
+2025-11-25 19:47:56,892 - __main__ - INFO - Epoch [136/200] | Train Loss: 0.1013 | Train Acc: 0.9551 | Val Loss: 1.1402 | Val Acc: 0.7592
+2025-11-25 19:48:14,917 - __main__ - INFO - Epoch [137/200] | Train Loss: 0.1002 | Train Acc: 0.9565 | Val Loss: 1.1142 | Val Acc: 0.7626
+2025-11-25 19:48:33,329 - __main__ - INFO - Epoch [138/200] | Train Loss: 0.1020 | Train Acc: 0.9550 | Val Loss: 1.1377 | Val Acc: 0.7569
+2025-11-25 19:48:51,527 - __main__ - INFO - Epoch [139/200] | Train Loss: 0.0970 | Train Acc: 0.9568 | Val Loss: 1.0970 | Val Acc: 0.7546
+2025-11-25 19:49:09,985 - __main__ - INFO - Epoch [140/200] | Train Loss: 0.0981 | Train Acc: 0.9565 | Val Loss: 1.0772 | Val Acc: 0.7571
+2025-11-25 19:49:28,041 - __main__ - INFO - Epoch [141/200] | Train Loss: 0.1006 | Train Acc: 0.9561 | Val Loss: 1.0917 | Val Acc: 0.7606
+2025-11-25 19:49:46,422 - __main__ - INFO - Epoch [142/200] | Train Loss: 0.0993 | Train Acc: 0.9561 | Val Loss: 1.0991 | Val Acc: 0.7634
+2025-11-25 19:50:04,709 - __main__ - INFO - Epoch [143/200] | Train Loss: 0.0995 | Train Acc: 0.9570 | Val Loss: 1.0729 | Val Acc: 0.7609
+2025-11-25 19:50:22,684 - __main__ - INFO - Epoch [144/200] | Train Loss: 0.0973 | Train Acc: 0.9584 | Val Loss: 1.1515 | Val Acc: 0.7611
+2025-11-25 19:50:40,605 - __main__ - INFO - Epoch [145/200] | Train Loss: 0.0976 | Train Acc: 0.9573 | Val Loss: 1.1517 | Val Acc: 0.7551
+2025-11-25 19:50:58,835 - __main__ - INFO - Epoch [146/200] | Train Loss: 0.0945 | Train Acc: 0.9588 | Val Loss: 1.1065 | Val Acc: 0.7561
+2025-11-25 19:51:16,774 - __main__ - INFO - Epoch [147/200] | Train Loss: 0.0957 | Train Acc: 0.9583 | Val Loss: 1.0762 | Val Acc: 0.7595
+2025-11-25 19:51:34,491 - __main__ - INFO - Epoch [148/200] | Train Loss: 0.0958 | Train Acc: 0.9575 | Val Loss: 1.0861 | Val Acc: 0.7586
+2025-11-25 19:51:52,666 - __main__ - INFO - Epoch [149/200] | Train Loss: 0.0923 | Train Acc: 0.9598 | Val Loss: 1.0899 | Val Acc: 0.7579
+2025-11-25 19:52:11,013 - __main__ - INFO - Epoch [150/200] | Train Loss: 0.0924 | Train Acc: 0.9598 | Val Loss: 1.1273 | Val Acc: 0.7620
+2025-11-25 19:52:11,013 - __main__ - INFO - Early stopping triggered after 150 epochs. No improvement for 25 epochs.
+2025-11-25 19:52:11,015 - __main__ - INFO - Loaded best model state (validation accuracy: 0.7635)
+2025-11-25 19:52:11,017 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:11,017 - __main__ - INFO - Final evaluation on validation set...
+2025-11-25 19:52:11,017 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:11,828 - __main__ - INFO - Final Validation Loss: 0.8894
+2025-11-25 19:52:11,828 - __main__ - INFO - Final Validation Accuracy: 0.7620
+2025-11-25 19:52:11,828 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:11,828 - __main__ - INFO - Evaluating on held-out test set...
+2025-11-25 19:52:11,828 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:12,622 - __main__ - INFO - Test Loss: 0.9122
+2025-11-25 19:52:12,622 - __main__ - INFO - Test Accuracy: 0.7564
+2025-11-25 19:52:12,622 - __main__ - INFO - 
+Test Set Classification Report:
+2025-11-25 19:52:12,703 - __main__ - INFO - 
+              precision    recall  f1-score   support
+
+         car       0.66      0.63      0.65      2096
+construction       0.83      0.81      0.82      2917
+       fence       0.44      0.38      0.41       360
+   longboard       0.89      0.89      0.89      1191
+manipulation       0.87      0.90      0.89      1722
+   openclose       0.72      0.50      0.59       594
+     regular       0.81      0.96      0.88       420
+     running       0.69      0.77      0.73      1293
+        walk       0.61      0.65      0.63      1272
+
+    accuracy                           0.76     11865
+   macro avg       0.73      0.72      0.72     11865
+weighted avg       0.76      0.76      0.75     11865
+
+2025-11-25 19:52:12,723 - __main__ - INFO - 
+Test Set Confusion Matrix:
+2025-11-25 19:52:12,726 - __main__ - INFO - 
+[[1326  211   81   44   48   28   17  171  170]
+ [ 240 2370   32   16   36   27   15   72  109]
+ [  94   33  138    3    3    3   32   11   43]
+ [  30   26    4 1060    4    2   11   42   12]
+ [  27   18    8   12 1551   21    1   35   49]
+ [  46   45    3   27   40  299    5   61   68]
+ [   6    3    4    0    0    0  404    0    3]
+ [  81   58    5   23   41   20    1  998   66]
+ [ 160  102   42    2   50   16   10   61  829]]
+2025-11-25 19:52:12,726 - __main__ - INFO - 
+======================================================================
+2025-11-25 19:52:12,726 - __main__ - INFO - Validation Set Classification Report (for comparison):
+2025-11-25 19:52:12,726 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:12,748 - __main__ - INFO - 
+              precision    recall  f1-score   support
+
+         car       0.68      0.64      0.66      2096
+construction       0.83      0.83      0.83      2917
+       fence       0.42      0.37      0.39       360
+   longboard       0.89      0.89      0.89      1191
+manipulation       0.87      0.91      0.89      1723
+   openclose       0.74      0.50      0.60       594
+     regular       0.77      0.96      0.85       420
+     running       0.71      0.79      0.74      1293
+        walk       0.62      0.64      0.63      1271
+
+    accuracy                           0.76     11865
+   macro avg       0.72      0.72      0.72     11865
+weighted avg       0.76      0.76      0.76     11865
+
+2025-11-25 19:52:12,748 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:12,748 - __main__ - INFO - Plotting training history...
+2025-11-25 19:52:12,748 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:13,344 - __main__ - INFO - Training history saved to 'training_history.png'
+2025-11-25 19:52:13,345 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:13,345 - __main__ - INFO - Training Summary
+2025-11-25 19:52:13,345 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:13,345 - __main__ - INFO - Total Epochs: 150
+2025-11-25 19:52:13,345 - __main__ - INFO - Final Training Loss: 0.0924
+2025-11-25 19:52:13,345 - __main__ - INFO - Final Training Accuracy: 0.9598
+2025-11-25 19:52:13,345 - __main__ - INFO - Final Validation Loss: 1.1273
+2025-11-25 19:52:13,345 - __main__ - INFO - Final Validation Accuracy: 0.7620
+2025-11-25 19:52:13,345 - __main__ - INFO - Best Validation Accuracy: 0.7635 (Epoch 125)
+2025-11-25 19:52:13,345 - __main__ - INFO - Test Accuracy: 0.7564
+2025-11-25 19:52:13,345 - __main__ - INFO - ======================================================================
+2025-11-25 19:52:13,345 - __main__ - INFO - Training completed successfully!

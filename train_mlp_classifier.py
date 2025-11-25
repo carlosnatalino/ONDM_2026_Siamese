@@ -194,153 +194,21 @@ class DASEventClassifier(nn.Module):
         
         self.input_dim = input_dim
         self.num_classes = num_classes
-        self.use_sigmoid = use_sigmoid
-        self.dropout_rate = dropout
-        
-        # First convolutional block
-        # Input: [batch, 1, 2048]
-        # Output: [batch, 64, 2042] (2048 - 7 + 1 = 2042)
-        self.conv1 = nn.Conv1d(
-            in_channels=1,
-            out_channels=64,  # From paper/figure
-            kernel_size=7,    # From paper/figure
-            stride=1,
-            padding=0
+        self.network = nn.Sequential(
+            nn.Linear(input_dim, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(1024, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(512, num_classes),
+            # nn.Softmax(dim=1),
         )
-        
-        # LeakyReLU activation (negative_slope=0.01 is default)
-        # From paper/figure - LeakyReLU helps with gradient flow
-        self.leaky_relu1 = nn.LeakyReLU(negative_slope=0.01)
-        
-        # Max pooling: reduces length by factor of 4
-        # Input: [batch, 64, 2042]
-        # Output: [batch, 64, 510] (2042 / 4 = 510.5, rounded down to 510)
-        self.pool1 = nn.MaxPool1d(kernel_size=4)
-
-        self.dropout1 = nn.Dropout(p=self.dropout_rate)
-        
-        # Second convolutional block
-        # Input: [batch, 64, 510]
-        # Output: [batch, 256, 504] (510 - 7 + 1 = 504)
-        self.conv2 = nn.Conv1d(
-            in_channels=64,
-            out_channels=256,  # From paper/figure
-            kernel_size=7,     # From paper/figure
-            stride=1,
-            padding=0
-        )
-        
-        # LeakyReLU activation
-        self.leaky_relu2 = nn.LeakyReLU(negative_slope=0.01)
-        
-        # Max pooling: reduces length by factor of 4
-        # Input: [batch, 256, 504]
-        # Output: [batch, 256, 126] (504 / 4 = 126)
-        self.pool2 = nn.MaxPool1d(kernel_size=4)
-
-        self.dropout2 = nn.Dropout(p=self.dropout_rate)
-        
-        # Flatten layer
-        # Input: [batch, 256, 126]
-        # Output: [batch, 32256] (256 * 126 = 32256)
-        self.flatten = nn.Flatten()
-        
-        # First fully connected layer
-        # Input: [batch, 32256]
-        # Output: [batch, 1024]
-        self.fc1 = nn.Linear(
-            in_features=256 * 126,  # 32256 from paper/figure
-            out_features=1024       # From paper/figure
-        )
-        
-        # Dropout for regularization to prevent overfitting
-        # The model has 33M parameters and is prone to overfitting
-        # Dropout randomly sets some neurons to zero during training
-        self.dropout_fc1 = nn.Dropout(p=self.dropout_rate)
-        
-        # Activation function
-        # NOTE: The paper mentions Sigmoid, but this causes vanishing gradients.
-        # Using ReLU instead for better gradient flow. If you want to match the
-        # paper exactly, set use_sigmoid=True, but expect slower convergence.
-        # The paper achieved 91% accuracy, likely with careful initialization
-        # and normalization that we're also adding.
-        if self.use_sigmoid:
-            self.activation = nn.Sigmoid()
-        else:
-            self.activation = nn.ReLU()
-        
-        # Initialize weights properly for better training
-        self._initialize_weights()
-        
-        # Output layer
-        # Input: [batch, 1024]
-        # Output: [batch, num_classes]
-        self.fc2 = nn.Linear(
-            in_features=1024,
-            out_features=num_classes
-        )
-        # self.softmax = nn.Softmax(dim=1)
-        
-        # Softmax is applied in the loss function (CrossEntropyLoss includes it)
-        # but we can also apply it explicitly if needed
-    
-    def _initialize_weights(self):
-        """
-        Initialize weights using He initialization for ReLU or Xavier for Sigmoid.
-        This helps with training stability and convergence.
-        """
-        for m in self.modules():
-            if isinstance(m, nn.Conv1d):
-                if self.use_sigmoid:
-                    nn.init.xavier_uniform_(m.weight)
-                else:
-                    nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                if self.use_sigmoid:
-                    nn.init.xavier_uniform_(m.weight)
-                else:
-                    nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
     
     def forward(self, x):
-        """
-        Forward pass through the network.
-        
-        Args:
-            x: Input tensor of shape [batch, input_dim]
-            
-        Returns:
-            Output tensor of shape [batch, num_classes]
-        """
-        # Reshape input from [batch, 2048] to [batch, 1, 2048] for Conv1d
-        # Conv1d expects [batch, channels, length]
-        if x.dim() == 2:
-            x = x.unsqueeze(1)  # Add channel dimension
-        
-        # First convolutional block
-        x = self.conv1(x)        # [batch, 64, 2042]
-        x = self.leaky_relu1(x)   # [batch, 64, 2042]
-        x = self.pool1(x)         # [batch, 64, 510]
-        x = self.dropout1(x)      # [batch, 64, 510]
-        # Second convolutional block
-        x = self.conv2(x)         # [batch, 256, 504]
-        x = self.leaky_relu2(x)  # [batch, 256, 504]
-        x = self.pool2(x)         # [batch, 256, 126]
-        x = self.dropout2(x)      # [batch, 256, 126]
-        # Flatten
-        x = self.flatten(x)       # [batch, 32256]
-        
-        # Fully connected layers
-        x = self.fc1(x)           # [batch, 1024]
-        x = self.activation(x)     # [batch, 1024] - ReLU or Sigmoid
-        x = self.dropout_fc1(x)   # [batch, 1024] - Dropout for regularization (only active during training)
-        x = self.fc2(x)           # [batch, num_classes]
-        # x = self.softmax(x)       # [batch, num_classes]
-        
-        return x
+        return self.network(x)
 
 
 # ============================================================================
@@ -874,8 +742,8 @@ def main():
     axes[1].set_ylim([0, 1])
     
     plt.tight_layout()
-    plt.savefig('training_history.png', dpi=150, bbox_inches='tight')
-    logger.info("Training history saved to 'training_history.png'")
+    plt.savefig('training_history_mlp.png', dpi=150, bbox_inches='tight')
+    logger.info("Training history saved to 'training_history_mlp.png'")
     
     # Print summary
     logger.info("=" * 70)

@@ -1,0 +1,226 @@
+2025-11-25 19:19:57,342 - __main__ - INFO - Random seed set to 42
+2025-11-25 19:19:57,361 - __main__ - INFO - Using CUDA: NVIDIA GeForce RTX 2080 Ti
+2025-11-25 19:19:57,361 - __main__ - INFO - ======================================================================
+2025-11-25 19:19:57,361 - __main__ - INFO - Loading and preprocessing dataset...
+2025-11-25 19:19:57,361 - __main__ - INFO - ======================================================================
+2025-11-25 19:19:57,440 - data_loader - INFO - Parsing dataset for label [walk]...
+2025-11-25 19:19:57,440 - data_loader - INFO - Parsing dataset for label [construction]...
+2025-11-25 19:19:57,440 - data_loader - INFO - Parsing dataset for label [longboard]...
+2025-11-25 19:19:57,440 - data_loader - INFO - Parsing dataset for label [regular]...
+2025-11-25 19:19:57,440 - data_loader - INFO - Parsing dataset for label [car]...
+2025-11-25 19:19:57,440 - data_loader - INFO - Parsing dataset for label [fence]...
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/walk/walking2_2023-04-17T122153+0100.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Parsing dataset for label [openclose]...
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/longboard/longboardroad_2023-04-17T123638+0100.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/construction/reconstruction1_2023-06-06T150714+0100.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Parsing dataset for label [running]...
+2025-11-25 19:19:57,441 - data_loader - INFO - Parsing dataset for label [manipulation]...
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/regular/regularshit_2023-04-17T130103+0100.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto2_2023-04-17T124510+0100.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/fence/kopani_plot_2023-11-07T150207Z.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/openclose/openingclosing_2023-04-17T122658+0100.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/running/running_2023-04-17T122413+0100.h5
+2025-11-25 19:19:57,441 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/manipulation/manipulation_2023-04-17T122847+0100.h5
+2025-11-25 19:20:02,597 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto4_2023-06-06T145055+0100.h5
+2025-11-25 19:20:04,936 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/longboard/longboard_2023-04-17T123543+0100.h5
+2025-11-25 19:20:05,891 - data_loader - WARNING - Total samples extracted for openclose: 6792
+2025-11-25 19:20:12,746 - data_loader - WARNING - Total samples extracted for longboard: 15367
+2025-11-25 19:20:14,017 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/fence/fence_2023-04-17T123117+0100.h5
+2025-11-25 19:20:14,318 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/fence/plot_2023-11-07T150119Z.h5
+2025-11-25 19:20:14,403 - data_loader - WARNING - Total samples extracted for running: 13877
+2025-11-25 19:20:14,480 - data_loader - WARNING - Total samples extracted for manipulation: 17710
+2025-11-25 19:20:15,677 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/walk/walking_2023-04-17T121933+0100.h5
+2025-11-25 19:20:17,011 - data_loader - WARNING - Total samples extracted for walk: 19155
+2025-11-25 19:20:17,809 - data_loader - WARNING - Total samples extracted for fence: 43981
+2025-11-25 19:20:18,159 - data_loader - WARNING - Total samples extracted for regular: 4201
+2025-11-25 19:20:20,593 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto_2023-04-17T124152+0100.h5
+2025-11-25 19:20:22,513 - data_loader - WARNING - Total samples extracted for construction: 54832
+2025-11-25 19:20:22,720 - data_loader - INFO - Processing file: /nobackup/carda/datasets/DAS-dataset/data/car/auto4_2023-06-06T144655+0100.h5
+2025-11-25 19:20:24,530 - data_loader - WARNING - Total samples extracted for car: 58017
+2025-11-25 19:20:32,483 - data_loader - INFO - Applying preprocessing transformation to dataset...
+2025-11-25 19:20:33,972 - data_loader - INFO - Applying preprocessing function: <function fft at 0x7f0c581ff920>
+2025-11-25 19:21:00,430 - data_loader - INFO - Filtering out noisy samples...
+2025-11-25 19:21:39,254 - data_loader - INFO - Encoding labels...
+2025-11-25 19:21:39,317 - data_loader - WARNING - Sample counts per category: Counter({'construction': 29169, 'car': 20957, 'manipulation': 17223, 'running': 12927, 'walk': 12714, 'longboard': 11908, 'openclose': 5943, 'regular': 4201, 'fence': 3600})
+/home/carda/projects/2026-ICMLCN-Siamese/venv/lib/python3.13/site-packages/sklearn/preprocessing/_label.py:110: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+  y = column_or_1d(y, warn=True)
+2025-11-25 19:21:39,415 - data_loader - WARNING - Computed class weights: [0.62902345 0.45193337 3.66179012 1.10702422 0.76539769 2.21814647
+ 3.13793012 1.01976054 1.03684477]
+2025-11-25 19:21:39,486 - data_loader - WARNING - Label encoding complete: ['car' 'construction' 'fence' 'longboard' 'manipulation' 'openclose'
+ 'regular' 'running' 'walk']
+2025-11-25 19:21:39,991 - __main__ - INFO - Dataset loaded: 118642 samples
+2025-11-25 19:21:39,991 - __main__ - INFO - Feature shape: (118642, 2048)
+2025-11-25 19:21:39,991 - __main__ - INFO - Label shape: (118642, 9)
+2025-11-25 19:21:39,991 - __main__ - INFO - Number of classes: 9
+2025-11-25 19:21:39,992 - __main__ - INFO - Class names: ['car' 'construction' 'fence' 'longboard' 'manipulation' 'openclose'
+ 'regular' 'running' 'walk']
+2025-11-25 19:21:40,011 - __main__ - INFO - Class weights for handling imbalance: [0.62902343 0.45193338 3.6617901  1.1070242  0.76539767 2.2181466
+ 3.1379302  1.0197605  1.0368447 ]
+2025-11-25 19:21:40,011 - __main__ - INFO - ======================================================================
+2025-11-25 19:21:40,011 - __main__ - INFO - Splitting dataset into train, validation, and test sets...
+2025-11-25 19:21:40,011 - __main__ - INFO - ======================================================================
+2025-11-25 19:21:40,523 - __main__ - INFO - Training samples: 94912 (80.0%)
+2025-11-25 19:21:40,523 - __main__ - INFO - Validation samples: 11865 (10.0%)
+2025-11-25 19:21:40,523 - __main__ - INFO - Test samples: 11865 (10.0%)
+2025-11-25 19:21:41,890 - __main__ - INFO - ======================================================================
+2025-11-25 19:21:41,890 - __main__ - INFO - Initializing model...
+2025-11-25 19:21:41,890 - __main__ - INFO - ======================================================================
+2025-11-25 19:21:42,370 - __main__ - INFO - Model architecture:
+2025-11-25 19:21:42,370 - __main__ - INFO - DASEventClassifier(
+  (network): Sequential(
+    (0): Linear(in_features=2048, out_features=1024, bias=True)
+    (1): BatchNorm1d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ReLU()
+    (3): Dropout(p=0.3, inplace=False)
+    (4): Linear(in_features=1024, out_features=512, bias=True)
+    (5): BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (6): ReLU()
+    (7): Dropout(p=0.3, inplace=False)
+    (8): Linear(in_features=512, out_features=9, bias=True)
+  )
+)
+2025-11-25 19:21:42,371 - __main__ - INFO - Total parameters: 2,630,665
+2025-11-25 19:21:42,371 - __main__ - INFO - Trainable parameters: 2,630,665
+2025-11-25 19:21:42,371 - __main__ - INFO - ======================================================================
+2025-11-25 19:21:42,371 - __main__ - INFO - Starting training...
+2025-11-25 19:21:42,371 - __main__ - INFO - ======================================================================
+2025-11-25 19:21:42,373 - __main__ - INFO - Using class weights: [0.62902343 0.45193338 3.6617901  1.1070242  0.76539767 2.2181466
+ 3.1379302  1.0197605  1.0368447 ]
+2025-11-25 19:21:44,620 - __main__ - INFO - Starting training for 100 epochs...
+2025-11-25 19:21:44,620 - __main__ - INFO - Learning rate: 0.0001, Weight decay: 0.0001
+2025-11-25 19:21:44,621 - __main__ - INFO - Early stopping patience: 15 epochs
+2025-11-25 19:21:49,600 - __main__ - INFO - Epoch [1/100] | Train Loss: 1.4362 | Train Acc: 0.4525 | Val Loss: 1.1206 | Val Acc: 0.5849 * BEST *
+2025-11-25 19:21:53,360 - __main__ - INFO - Epoch [2/100] | Train Loss: 1.0024 | Train Acc: 0.6256 | Val Loss: 0.9656 | Val Acc: 0.6499 * BEST *
+2025-11-25 19:21:57,201 - __main__ - INFO - Epoch [3/100] | Train Loss: 0.8251 | Train Acc: 0.6864 | Val Loss: 0.9019 | Val Acc: 0.6691 * BEST *
+2025-11-25 19:22:00,369 - __main__ - INFO - Epoch [4/100] | Train Loss: 0.7082 | Train Acc: 0.7238 | Val Loss: 0.8792 | Val Acc: 0.6820 * BEST *
+2025-11-25 19:22:04,531 - __main__ - INFO - Epoch [5/100] | Train Loss: 0.6074 | Train Acc: 0.7558 | Val Loss: 0.8740 | Val Acc: 0.6887 * BEST *
+2025-11-25 19:22:08,888 - __main__ - INFO - Epoch [6/100] | Train Loss: 0.5184 | Train Acc: 0.7854 | Val Loss: 0.8698 | Val Acc: 0.6944 * BEST *
+2025-11-25 19:22:12,936 - __main__ - INFO - Epoch [7/100] | Train Loss: 0.4425 | Train Acc: 0.8114 | Val Loss: 0.8858 | Val Acc: 0.7070 * BEST *
+2025-11-25 19:22:16,882 - __main__ - INFO - Epoch [8/100] | Train Loss: 0.3739 | Train Acc: 0.8364 | Val Loss: 0.9032 | Val Acc: 0.7113 * BEST *
+2025-11-25 19:22:20,549 - __main__ - INFO - Epoch [9/100] | Train Loss: 0.3170 | Train Acc: 0.8591 | Val Loss: 0.9268 | Val Acc: 0.7174 * BEST *
+2025-11-25 19:22:24,141 - __main__ - INFO - Epoch [10/100] | Train Loss: 0.2700 | Train Acc: 0.8785 | Val Loss: 0.9258 | Val Acc: 0.7241 * BEST *
+2025-11-25 19:22:28,208 - __main__ - INFO - Epoch [11/100] | Train Loss: 0.2298 | Train Acc: 0.8968 | Val Loss: 0.9714 | Val Acc: 0.7263 * BEST *
+2025-11-25 19:22:32,354 - __main__ - INFO - Epoch [12/100] | Train Loss: 0.1952 | Train Acc: 0.9121 | Val Loss: 0.9915 | Val Acc: 0.7273 * BEST *
+2025-11-25 19:22:36,418 - __main__ - INFO - Epoch [13/100] | Train Loss: 0.1687 | Train Acc: 0.9238 | Val Loss: 1.0051 | Val Acc: 0.7204
+2025-11-25 19:22:40,431 - __main__ - INFO - Epoch [14/100] | Train Loss: 0.1500 | Train Acc: 0.9328 | Val Loss: 1.0281 | Val Acc: 0.7257
+2025-11-25 19:22:43,769 - __main__ - INFO - Epoch [15/100] | Train Loss: 0.1363 | Train Acc: 0.9389 | Val Loss: 1.0822 | Val Acc: 0.7325 * BEST *
+2025-11-25 19:22:47,682 - __main__ - INFO - Epoch [16/100] | Train Loss: 0.1210 | Train Acc: 0.9458 | Val Loss: 1.0289 | Val Acc: 0.7419 * BEST *
+2025-11-25 19:22:51,759 - __main__ - INFO - Epoch [17/100] | Train Loss: 0.1083 | Train Acc: 0.9525 | Val Loss: 1.0999 | Val Acc: 0.7367
+2025-11-25 19:22:55,667 - __main__ - INFO - Epoch [18/100] | Train Loss: 0.0997 | Train Acc: 0.9560 | Val Loss: 1.0682 | Val Acc: 0.7404
+2025-11-25 19:22:59,810 - __main__ - INFO - Epoch [19/100] | Train Loss: 0.0918 | Train Acc: 0.9599 | Val Loss: 1.0905 | Val Acc: 0.7369
+2025-11-25 19:23:02,974 - __main__ - INFO - Epoch [20/100] | Train Loss: 0.0829 | Train Acc: 0.9645 | Val Loss: 1.1066 | Val Acc: 0.7395
+2025-11-25 19:23:07,555 - __main__ - INFO - Epoch [21/100] | Train Loss: 0.0783 | Train Acc: 0.9661 | Val Loss: 1.1465 | Val Acc: 0.7458 * BEST *
+2025-11-25 19:23:11,943 - __main__ - INFO - Epoch [22/100] | Train Loss: 0.0719 | Train Acc: 0.9698 | Val Loss: 1.2004 | Val Acc: 0.7418
+2025-11-25 19:23:16,265 - __main__ - INFO - Epoch [23/100] | Train Loss: 0.0704 | Train Acc: 0.9702 | Val Loss: 1.1544 | Val Acc: 0.7459 * BEST *
+2025-11-25 19:23:20,608 - __main__ - INFO - Epoch [24/100] | Train Loss: 0.0651 | Train Acc: 0.9722 | Val Loss: 1.1777 | Val Acc: 0.7429
+2025-11-25 19:23:24,070 - __main__ - INFO - Epoch [25/100] | Train Loss: 0.0642 | Train Acc: 0.9730 | Val Loss: 1.1417 | Val Acc: 0.7411
+2025-11-25 19:23:28,225 - __main__ - INFO - Epoch [26/100] | Train Loss: 0.0600 | Train Acc: 0.9753 | Val Loss: 1.1666 | Val Acc: 0.7412
+2025-11-25 19:23:32,183 - __main__ - INFO - Epoch [27/100] | Train Loss: 0.0583 | Train Acc: 0.9760 | Val Loss: 1.1722 | Val Acc: 0.7464 * BEST *
+2025-11-25 19:23:36,153 - __main__ - INFO - Epoch [28/100] | Train Loss: 0.0538 | Train Acc: 0.9777 | Val Loss: 1.2164 | Val Acc: 0.7406
+2025-11-25 19:23:40,140 - __main__ - INFO - Epoch [29/100] | Train Loss: 0.0521 | Train Acc: 0.9781 | Val Loss: 1.1927 | Val Acc: 0.7461
+2025-11-25 19:23:43,950 - __main__ - INFO - Epoch [30/100] | Train Loss: 0.0509 | Train Acc: 0.9786 | Val Loss: 1.2881 | Val Acc: 0.7450
+2025-11-25 19:23:47,329 - __main__ - INFO - Epoch [31/100] | Train Loss: 0.0499 | Train Acc: 0.9793 | Val Loss: 1.3041 | Val Acc: 0.7442
+2025-11-25 19:23:51,393 - __main__ - INFO - Epoch [32/100] | Train Loss: 0.0491 | Train Acc: 0.9806 | Val Loss: 1.2064 | Val Acc: 0.7484 * BEST *
+2025-11-25 19:23:55,739 - __main__ - INFO - Epoch [33/100] | Train Loss: 0.0464 | Train Acc: 0.9811 | Val Loss: 1.2704 | Val Acc: 0.7452
+2025-11-25 19:24:00,234 - __main__ - INFO - Epoch [34/100] | Train Loss: 0.0476 | Train Acc: 0.9808 | Val Loss: 1.2255 | Val Acc: 0.7520 * BEST *
+2025-11-25 19:24:04,539 - __main__ - INFO - Epoch [35/100] | Train Loss: 0.0451 | Train Acc: 0.9812 | Val Loss: 1.2123 | Val Acc: 0.7552 * BEST *
+2025-11-25 19:24:08,206 - __main__ - INFO - Epoch [36/100] | Train Loss: 0.0418 | Train Acc: 0.9831 | Val Loss: 1.2439 | Val Acc: 0.7508
+2025-11-25 19:24:12,613 - __main__ - INFO - Epoch [37/100] | Train Loss: 0.0406 | Train Acc: 0.9836 | Val Loss: 1.2251 | Val Acc: 0.7544
+2025-11-25 19:24:16,767 - __main__ - INFO - Epoch [38/100] | Train Loss: 0.0406 | Train Acc: 0.9839 | Val Loss: 1.2636 | Val Acc: 0.7492
+2025-11-25 19:24:21,033 - __main__ - INFO - Epoch [39/100] | Train Loss: 0.0390 | Train Acc: 0.9838 | Val Loss: 1.2219 | Val Acc: 0.7525
+2025-11-25 19:24:25,406 - __main__ - INFO - Epoch [40/100] | Train Loss: 0.0378 | Train Acc: 0.9847 | Val Loss: 1.2606 | Val Acc: 0.7564 * BEST *
+2025-11-25 19:24:28,552 - __main__ - INFO - Epoch [41/100] | Train Loss: 0.0374 | Train Acc: 0.9849 | Val Loss: 1.2684 | Val Acc: 0.7501
+2025-11-25 19:24:32,821 - __main__ - INFO - Epoch [42/100] | Train Loss: 0.0356 | Train Acc: 0.9859 | Val Loss: 1.2266 | Val Acc: 0.7553
+2025-11-25 19:24:37,113 - __main__ - INFO - Epoch [43/100] | Train Loss: 0.0336 | Train Acc: 0.9865 | Val Loss: 1.2375 | Val Acc: 0.7542
+2025-11-25 19:24:41,470 - __main__ - INFO - Epoch [44/100] | Train Loss: 0.0343 | Train Acc: 0.9862 | Val Loss: 1.2851 | Val Acc: 0.7536
+2025-11-25 19:24:45,592 - __main__ - INFO - Epoch [45/100] | Train Loss: 0.0322 | Train Acc: 0.9869 | Val Loss: 1.3011 | Val Acc: 0.7561
+2025-11-25 19:24:48,758 - __main__ - INFO - Epoch [46/100] | Train Loss: 0.0337 | Train Acc: 0.9865 | Val Loss: 1.2521 | Val Acc: 0.7553
+2025-11-25 19:24:53,067 - __main__ - INFO - Epoch [47/100] | Train Loss: 0.0350 | Train Acc: 0.9865 | Val Loss: 1.2573 | Val Acc: 0.7553
+2025-11-25 19:24:57,473 - __main__ - INFO - Epoch [48/100] | Train Loss: 0.0306 | Train Acc: 0.9879 | Val Loss: 1.3258 | Val Acc: 0.7504
+2025-11-25 19:25:01,923 - __main__ - INFO - Epoch [49/100] | Train Loss: 0.0313 | Train Acc: 0.9873 | Val Loss: 1.3079 | Val Acc: 0.7520
+2025-11-25 19:25:06,398 - __main__ - INFO - Epoch [50/100] | Train Loss: 0.0299 | Train Acc: 0.9880 | Val Loss: 1.3712 | Val Acc: 0.7505
+2025-11-25 19:25:09,750 - __main__ - INFO - Epoch [51/100] | Train Loss: 0.0299 | Train Acc: 0.9887 | Val Loss: 1.2255 | Val Acc: 0.7555
+2025-11-25 19:25:13,953 - __main__ - INFO - Epoch [52/100] | Train Loss: 0.0287 | Train Acc: 0.9886 | Val Loss: 1.3081 | Val Acc: 0.7536
+2025-11-25 19:25:18,310 - __main__ - INFO - Epoch [53/100] | Train Loss: 0.0278 | Train Acc: 0.9893 | Val Loss: 1.2806 | Val Acc: 0.7523
+2025-11-25 19:25:22,646 - __main__ - INFO - Epoch [54/100] | Train Loss: 0.0269 | Train Acc: 0.9893 | Val Loss: 1.3019 | Val Acc: 0.7523
+2025-11-25 19:25:27,169 - __main__ - INFO - Epoch [55/100] | Train Loss: 0.0263 | Train Acc: 0.9897 | Val Loss: 1.2883 | Val Acc: 0.7559
+2025-11-25 19:25:27,170 - __main__ - INFO - Early stopping triggered after 55 epochs. No improvement for 15 epochs.
+2025-11-25 19:25:27,170 - __main__ - INFO - Loaded best model state (validation accuracy: 0.7564)
+2025-11-25 19:25:27,171 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:27,171 - __main__ - INFO - Final evaluation on validation set...
+2025-11-25 19:25:27,171 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:27,734 - __main__ - INFO - Final Validation Loss: 1.0836
+2025-11-25 19:25:27,734 - __main__ - INFO - Final Validation Accuracy: 0.7559
+2025-11-25 19:25:27,734 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:27,735 - __main__ - INFO - Evaluating on held-out test set...
+2025-11-25 19:25:27,735 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:28,305 - __main__ - INFO - Test Loss: 1.0441
+2025-11-25 19:25:28,305 - __main__ - INFO - Test Accuracy: 0.7563
+2025-11-25 19:25:28,305 - __main__ - INFO - 
+Test Set Classification Report:
+2025-11-25 19:25:28,329 - __main__ - INFO - 
+              precision    recall  f1-score   support
+
+         car       0.69      0.63      0.66      2096
+construction       0.82      0.83      0.82      2917
+       fence       0.44      0.34      0.38       360
+   longboard       0.85      0.89      0.87      1191
+manipulation       0.88      0.87      0.87      1722
+   openclose       0.63      0.55      0.59       594
+     regular       0.80      0.95      0.87       420
+     running       0.71      0.73      0.72      1293
+        walk       0.63      0.70      0.66      1272
+
+    accuracy                           0.76     11865
+   macro avg       0.72      0.72      0.72     11865
+weighted avg       0.75      0.76      0.75     11865
+
+2025-11-25 19:25:28,343 - __main__ - INFO - 
+Test Set Confusion Matrix:
+2025-11-25 19:25:28,343 - __main__ - INFO - 
+[[1324  224   73   62   44   41   30  128  170]
+ [ 170 2413   32   14   37   38   16   85  112]
+ [  95   44  121    7    6    7   21    9   50]
+ [  32   23    3 1058    3    8   10   43   11]
+ [  36   27   12   20 1493   30    6   36   62]
+ [  45   42    5   35   29  329    5   49   55]
+ [   5    4    5    2    0    2  400    0    2]
+ [  91   80    2   47   27   34    4  949   59]
+ [ 134   92   19    3   58   32    8   39  887]]
+2025-11-25 19:25:28,343 - __main__ - INFO - 
+======================================================================
+2025-11-25 19:25:28,343 - __main__ - INFO - Validation Set Classification Report (for comparison):
+2025-11-25 19:25:28,343 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:28,365 - __main__ - INFO - 
+              precision    recall  f1-score   support
+
+         car       0.70      0.64      0.67      2096
+construction       0.82      0.82      0.82      2917
+       fence       0.49      0.39      0.43       360
+   longboard       0.83      0.87      0.85      1191
+manipulation       0.87      0.88      0.88      1723
+   openclose       0.68      0.59      0.63       594
+     regular       0.79      0.94      0.86       420
+     running       0.68      0.72      0.70      1293
+        walk       0.62      0.68      0.65      1271
+
+    accuracy                           0.76     11865
+   macro avg       0.72      0.73      0.72     11865
+weighted avg       0.75      0.76      0.75     11865
+
+2025-11-25 19:25:28,365 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:28,365 - __main__ - INFO - Plotting training history...
+2025-11-25 19:25:28,365 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:28,765 - __main__ - INFO - Training history saved to 'training_history_mlp.png'
+2025-11-25 19:25:28,765 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:28,765 - __main__ - INFO - Training Summary
+2025-11-25 19:25:28,765 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:28,765 - __main__ - INFO - Total Epochs: 55
+2025-11-25 19:25:28,765 - __main__ - INFO - Final Training Loss: 0.0263
+2025-11-25 19:25:28,766 - __main__ - INFO - Final Training Accuracy: 0.9897
+2025-11-25 19:25:28,766 - __main__ - INFO - Final Validation Loss: 1.2883
+2025-11-25 19:25:28,766 - __main__ - INFO - Final Validation Accuracy: 0.7559
+2025-11-25 19:25:28,766 - __main__ - INFO - Best Validation Accuracy: 0.7564 (Epoch 40)
+2025-11-25 19:25:28,766 - __main__ - INFO - Test Accuracy: 0.7563
+2025-11-25 19:25:28,766 - __main__ - INFO - ======================================================================
+2025-11-25 19:25:28,766 - __main__ - INFO - Training completed successfully!
