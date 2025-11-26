@@ -244,6 +244,8 @@ class DASEventClassifier(nn.Module):
         # Input: [batch, 256, 126]
         # Output: [batch, 32256] (256 * 126 = 32256)
         self.flatten = nn.Flatten()
+
+        self.global_pool = nn.AdaptiveAvgPool1d(256 * 126)
         
         # First fully connected layer
         # Input: [batch, 32256]
@@ -279,7 +281,6 @@ class DASEventClassifier(nn.Module):
             in_features=1024,
             out_features=num_classes
         )
-        # self.softmax = nn.Softmax(dim=1)
         
         # Softmax is applied in the loss function (CrossEntropyLoss includes it)
         # but we can also apply it explicitly if needed
@@ -332,13 +333,12 @@ class DASEventClassifier(nn.Module):
         x = self.dropout2(x)      # [batch, 256, 126]
         # Flatten
         x = self.flatten(x)       # [batch, 32256]
-        
+        x = self.global_pool(x)   # [batch, 32256]
         # Fully connected layers
         x = self.fc1(x)           # [batch, 1024]
         x = self.activation(x)     # [batch, 1024] - ReLU or Sigmoid
         x = self.dropout_fc1(x)   # [batch, 1024] - Dropout for regularization (only active during training)
         x = self.fc2(x)           # [batch, num_classes]
-        # x = self.softmax(x)       # [batch, num_classes]
         
         return x
 
@@ -387,7 +387,8 @@ def train_epoch(model, train_loader, criterion, optimizer, device, class_weights
         
         # Statistics
         running_loss += loss.item() * data.size(0)
-        _, predicted = torch.max(output.data, 1)
+        probs = torch.softmax(output, dim=1)
+        _, predicted = torch.max(probs.data, 1)
         total += target.size(0)
         correct += (predicted == target).sum().item()
     
@@ -426,7 +427,8 @@ def evaluate(model, data_loader, criterion, device):
             loss = criterion(output, target)
             
             running_loss += loss.item() * data.size(0)
-            _, predicted = torch.max(output.data, 1)
+            probs = torch.softmax(output, dim=1)
+            _, predicted = torch.max(probs.data, 1)
             total += target.size(0)
             correct += (predicted == target).sum().item()
             
