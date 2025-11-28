@@ -63,13 +63,15 @@ class DASDataLoader:
         Parses a specific label directory in the dataset, extracts signal windows, and assigns labels.
 
         :param label: Name of the subdirectory representing a label.
-        :return: A tuple containing a list of signal windows and their corresponding labels.
+        :return: A tuple containing a list of signal windows, corresponding labels, and file indices.
         """
         samples = []
+        file_indices = []  # Track which file each sample came from
         logger.info(f"Parsing dataset for label [{label}]...")
 
         # Iterate over all .h5 files in the label directory
-        for ds in glob(os.path.join(self.data_dir, label, "*.h5")):
+        h5_files = sorted(glob(os.path.join(self.data_dir, label, "*.h5")))
+        for file_idx, ds in enumerate(h5_files):
             logger.info(f"Processing file: {ds}")
             with h5py.File(ds) as f:
                 data = f["Acquisition"]["Raw[0]"]["RawData"]  # Extract raw DAS data
@@ -80,33 +82,42 @@ class DASDataLoader:
                 wins = self.generate_windows(data, bmp, decimation_factor)
 
             samples.extend(wins)
+            # Create unique file ID: combine label and file index
+            file_id = f"{label}_{file_idx}"
+            file_indices.extend([file_id] * len(wins))
 
         logger.warning(f"Total samples extracted for {label}: {len(samples)}")
-        return samples, [label] * len(samples)
+        return samples, [label] * len(samples), file_indices
 
     def parse_dataset(self):
         """
         Parses the entire dataset, applying preprocessing, noise filtering, and encoding labels.
 
         :return: A tuple containing the preprocessed feature samples and corresponding labels.
+                 Also stores file_indices for file-based splitting.
         """
         samples = []
         labels = []
+        file_indices = []
 
         # Use multiprocessing to speed up label parsing across different directories
         with Pool(12) as p:
             results = p.map(self._parse_label, os.listdir(self.data_dir))
-            for s, l in results:
+            for s, l, f in results:
                 samples.extend(s)
                 labels.extend(l)
+                file_indices.extend(f)
 
         logger.info("Applying preprocessing transformation to dataset...")
         self.samples = self.preprocess_windows(np.array(samples))
+        self.file_indices = np.array(file_indices)
 
         # Optionally drop noisy samples
         if self.drop_noise:
             logger.info("Filtering out noisy samples...")
-            self.samples, labels = self.drop_bad_samples(self.samples, samples, labels)
+            self.samples, labels, self.file_indices = self.drop_bad_samples(
+                self.samples, samples, labels, self.file_indices
+            )
 
         # Encode labels using One-Hot Encoding
         logger.info("Encoding labels...")
@@ -184,14 +195,16 @@ class DASDataLoader:
         return windows
 
     @staticmethod
-    def drop_bad_samples(data: np.array, unprocessed_data: np.array, labels: List[str]) -> Tuple[np.array, np.array]:
+    def drop_bad_samples(data: np.array, unprocessed_data: np.array, labels: List[str], 
+                         file_indices: np.array = None) -> Tuple[np.array, np.array, np.array]:
         """
         Filters out noisy samples based on spectral analysis.
 
         :param data: Preprocessed dataset.
         :param unprocessed_data: Original dataset before transformation.
         :param labels: Corresponding labels.
-        :return: Tuple containing the filtered dataset and labels.
+        :param file_indices: File indices for each sample (for file-based splitting).
+        :return: Tuple containing the filtered dataset, labels, and file indices.
         """
         def spec_cmp(x: np.array) -> bool:
             """
@@ -212,5 +225,7 @@ class DASDataLoader:
         cond |= labels == "regular"
 
         # Filter dataset based on noise conditions
-        return data[cond], labels[cond].tolist()
+        if file_indices is not None:
+            return data[cond], labels[cond].tolist(), file_indices[cond]
+        return data[cond], labels[cond].tolist(), None
 
