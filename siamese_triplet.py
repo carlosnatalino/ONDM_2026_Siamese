@@ -40,15 +40,15 @@ logging.basicConfig(level=logging.INFO)
 def get_dataset(data_dir):
     decim_dict = {
         # The 'regular' label will be decimated by a factor of 50
-        # 'regular': 50,
-        # 'fence': 50,
-        # 'longboard': 50,
-        # 'manipulation': 50,
-        # 'openclose': 50,
-        # 'running': 50,
-        # 'walk': 50,
-        # 'car': 50,
-        # 'construction': 50,
+        'regular': 90,
+        'fence': 90,
+        'longboard': 90,
+        'manipulation': 90,
+        'openclose': 90,
+        'running': 90,
+        'walk': 90,
+        'car': 90,
+        'construction': 90,
     }
 
     # Initializing the DASDataLoader with dataset parameters
@@ -1230,13 +1230,49 @@ def main(args):
         stratify=Y_temp
     )
     
-    print(f"Training samples: {len(X_train)}")
+    print(f"Training samples (before filtering): {len(X_train)}")
     print(f"Validation samples: {len(X_val)}")
     print(f"Test samples: {len(X_test)}")
     
+    # Filter training data by specified classes
+    if args.train_classes is not None and len(args.train_classes) > 0:
+        train_classes = args.train_classes
+        print(f"\nFiltering training data to classes: {train_classes}")
+        print(f"Class names: {[parser.encoder.classes_[i] for i in train_classes if i < len(parser.encoder.classes_)]}")
+        
+        # Create mask for selected classes
+        train_mask = np.isin(Y_train, train_classes)
+        X_train_filtered = X_train[train_mask]
+        Y_train_filtered = Y_train[train_mask]
+        
+        # Remap labels to consecutive indices for training
+        # This is important for prototypical networks to work correctly
+        label_mapping = {old_label: new_label for new_label, old_label in enumerate(sorted(train_classes))}
+        Y_train_remapped = np.array([label_mapping[y] for y in Y_train_filtered])
+        
+        print(f"Training samples (after filtering): {len(X_train_filtered)}")
+        print(f"Label mapping: {label_mapping}")
+        
+        X_train_selected = X_train_filtered
+        Y_train_selected = Y_train_remapped
+        train_class_names = [parser.encoder.classes_[i] for i in sorted(train_classes) if i < len(parser.encoder.classes_)]
+    else:
+        X_train_selected = X_train
+        Y_train_selected = Y_train
+        train_classes = list(range(len(parser.encoder.classes_)))
+        train_class_names = list(parser.encoder.classes_)
+        print("\nUsing all classes for training")
+    
     # Print class distribution
     print("\nClass distribution:")
-    for split_name, split_y in [("Train", Y_train), ("Val", Y_val), ("Test", Y_test)]:
+    print("Train (selected):", end="\t")
+    counter = Counter(Y_train_selected)
+    for key in range(len(np.unique(Y_train_selected))):
+        value = counter.get(key, 0)
+        print(f"{key}: {value:<5}", end="\t")
+    print()
+    
+    for split_name, split_y in [("Val (all)", Y_val), ("Test (all)", Y_test)]:
         print(f"{split_name}:", end="\t")
         counter = Counter(split_y)
         for key in range(len(parser.encoder.classes_)):
@@ -1245,13 +1281,21 @@ def main(args):
         print()
     
     # Create datasets
-    train_dataset = PrototypicalDataset(X_train, Y_train, augment=args.augment, seed=args.seed)
+    train_dataset = PrototypicalDataset(X_train_selected, Y_train_selected, augment=args.augment, seed=args.seed)
     val_dataset = PrototypicalDataset(X_val, Y_val, augment=False, seed=args.seed)
     test_dataset = PrototypicalDataset(X_test, Y_test, augment=False, seed=args.seed)
+    
+    # Adjust n_way if necessary based on number of training classes
+    n_train_classes = len(np.unique(Y_train_selected))
+    if args.n_way > n_train_classes:
+        print(f"\nWarning: n_way ({args.n_way}) > number of training classes ({n_train_classes}). Adjusting n_way to {n_train_classes}.")
+        args.n_way = n_train_classes
     
     # Get input dimension
     input_dim = x_normalized.shape[1]
     print(f"\nInput dimension: {input_dim}")
+    print(f"Number of training classes: {n_train_classes}")
+    print(f"Training class names: {train_class_names}")
     
     # Initialize model
     model = PrototypicalClassifier(
@@ -1269,7 +1313,7 @@ def main(args):
         print("Phase 1: Triplet Loss Pre-training")
         print("="*60)
         
-        triplet_train = TripletDataset(X_train, Y_train, triplets_per_sample=2, 
+        triplet_train = TripletDataset(X_train_selected, Y_train_selected, triplets_per_sample=2, 
                                         seed=args.seed, augment=args.augment)
         triplet_val = TripletDataset(X_val, Y_val, triplets_per_sample=1, seed=args.seed)
         
@@ -1409,6 +1453,9 @@ def main(args):
         'osr_results': osr_results,
         'args': vars(args),
         'class_names': class_names,
+        'train_classes': train_classes,
+        'train_class_names': train_class_names,
+        'n_train_classes': n_train_classes,
     }
     
     with open(f"{prefix}_results.pkl", "wb") as f:
@@ -1488,6 +1535,9 @@ if __name__ == "__main__":
                         help='Test set size ratio')
     parser.add_argument('--val_size', type=float, default=0.2,
                         help='Validation set size ratio')
+    parser.add_argument('--train_classes', type=int, nargs='+', default=None,
+                        help='List of class indices to use for training (e.g., --train_classes 0 2 4 6 8). '
+                             'If not specified, all classes are used.')
     
     # Other
     parser.add_argument('--save_dir', type=str, default='./checkpoints',
@@ -1497,6 +1547,8 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     print("Arguments:", args)
+    with open(f"{args.save_dir}/args.txt", "wt") as f:
+        f.write(str(args))
     os.makedirs(args.save_dir, exist_ok=True)
     main(args)
 
