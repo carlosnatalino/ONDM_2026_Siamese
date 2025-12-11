@@ -28,7 +28,7 @@ logging.basicConfig(level=logging.INFO)
 def get_dataset(data_dir):
     decim_dict = {
         # The 'regular' label will be decimated by a factor of 50
-        'regular': 50,
+        # 'regular': 50,
         # 'fence': 50,
         # 'longboard': 50,
         # 'manipulation': 50,
@@ -98,13 +98,11 @@ class SimilarityDataset(Dataset):
         self.seed = seed
         self.rng = np.random.RandomState(seed)
         self.augment = augment
-        self.class_indices = {c: np.where(self.y == c)[0] for c in np.unique(self.y)}
+        self.class_indices = {int(c): np.where(self.y == c)[0] for c in np.unique(self.y)}
+        self.n_classes = len(self.class_indices)
         
     def __len__(self):
-        if self.augment:
-            return len(self.x) * self.pairs_per_sample * 2
-        else:
-            return len(self.x) * self.pairs_per_sample
+        return len(self.y) * self.pairs_per_sample * 2
     
     def _augment(self, sample):
         """Simple augmentation: noise injection and frequency masking"""
@@ -126,7 +124,8 @@ class SimilarityDataset(Dataset):
         return sample
     
     def __getitem__(self, idx):
-        anchor_idx = idx % len(self.x)
+        anchor_class = self.rng.choice(list(self.class_indices.keys()))
+        anchor_idx = self.rng.choice(self.class_indices[anchor_class])
         anchor_sample = self.x[anchor_idx]
         anchor_label = self.y[anchor_idx].item()
 
@@ -141,8 +140,8 @@ class SimilarityDataset(Dataset):
             negative_classes = [c for c in self.class_indices.keys()
                                if c != anchor_label]
             negative_class = self.rng.choice(negative_classes)
-            positive_idx = self.rng.choice(self.class_indices[negative_class])
-            pair = self.x[positive_idx]
+            negative_idx = self.rng.choice(self.class_indices[negative_class])
+            pair = self.x[negative_idx]
             if self.augment:
                 pair = self._augment(pair)
             similarity_label = 0.0
@@ -486,12 +485,12 @@ def plot_training_history(model, args):
     plt.figure()
 
     # Plot 1: Training Loss
-    plt.plot(epochs, train_loss, 'g-', linewidth=2, label='Training Loss', marker='o', markersize=4)
+    plt.plot(epochs, train_loss, 'b-', linewidth=2, label='Training Loss', marker='o', markersize=4)
     if val_loss:
-        plt.plot(epochs, val_loss, 'r-', linewidth=2, label='Validation Loss', marker='s', markersize=4)
+        plt.plot(epochs, val_loss, 'g-', linewidth=2, label='Validation Loss', marker='s', markersize=4)
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.grid(True, alpha=0.3)
+    plt.grid(True, alpha=0.3, ls=":")
 
     plt.tight_layout()
     plt.savefig(f'{args.save_dir}/training_history_siamese_loss_{args.embedding_dim}_{args.batch_size}_{args.augment}_{args.network}.png')
@@ -499,12 +498,12 @@ def plot_training_history(model, args):
 
     plt.figure()
     # Plot 2: Training and Validation Accuracy
-    plt.plot(epochs, train_acc, 'g-', linewidth=2, label='Training Accuracy', marker='o', markersize=4)
+    plt.plot(epochs, train_acc, 'b-', linewidth=2, label='Training Accuracy', marker='o', markersize=4)
     if val_acc:
-        plt.plot(epochs, val_acc, 'r-', linewidth=2, label='Validation Accuracy', marker='s', markersize=4)
+        plt.plot(epochs, val_acc, 'g-', linewidth=2, label='Validation Accuracy', marker='s', markersize=4)
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
-    plt.grid(True, alpha=0.3)
+    plt.grid(True, alpha=0.3, ls=":")
 
     plt.tight_layout()
     plt.savefig(f'{args.save_dir}/training_history_siamese_acc_{args.embedding_dim}_{args.batch_size}_{args.augment}_{args.network}.png')
@@ -550,9 +549,13 @@ def main(args):
     print(f"Test samples: {len(X_test)}")
 
     # Create SimilarityDataset instances for training and validation
-    indices_selected = ( (Y_train == 6) | (Y_train == 8) | (Y_train == 0) | (Y_train == 2) | (Y_train == 4)).nonzero()[0]
-    X_train_selected = X_train[indices_selected]
-    Y_train_selected = Y_train[indices_selected]
+    if args.all_classes:
+        X_train_selected = X_train
+        Y_train_selected = Y_train
+    else:
+        indices_selected = ( (Y_train == 6) | (Y_train == 8) | (Y_train == 0) | (Y_train == 2) | (Y_train == 4)).nonzero()[0]
+        X_train_selected = X_train[indices_selected]
+        Y_train_selected = Y_train[indices_selected]
     
     print("Training samples:", end="\t")
     counter = Counter(Y_train_selected)
@@ -756,7 +759,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--embedding_dim', type=int, default=512)
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--augment', type=bool, default=True)
+    parser.add_argument('--augment', action='store_true', default=False)
     parser.add_argument('--network', type=str, default='cnn', choices=['cnn', 'mlp'])
     parser.add_argument('--save_dir', type=str, default='./checkpoints')
     parser.add_argument(
@@ -765,6 +768,7 @@ if __name__ == "__main__":
         default=25,
         help='Early stopping patience (epochs without improvement, default: 10)'
     )
+    parser.add_argument('--all_classes', action='store_true', default=False)
     parser.add_argument('--test_size', type=float, default=0.2)
     parser.add_argument('--val_size', type=float, default=0.2)
     parser.add_argument('--epochs', type=int, default=200)

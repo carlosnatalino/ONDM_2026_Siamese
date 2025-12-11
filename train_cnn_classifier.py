@@ -24,15 +24,18 @@ Author: Auto-generated based on OFS paper architecture
 """
 
 import sys
+import os
 import logging
 import random
 import argparse
 from pathlib import Path
+import pickle
+from collections import Counter
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 
 import torch
 import torch.nn as nn
@@ -458,7 +461,8 @@ def train_model(
     device,
     class_weights=None,
     early_stopping_patience=10,
-    log_interval=50
+    log_interval=50,
+    save_dir=None,
 ):
     """
     Train the model for multiple epochs.
@@ -557,6 +561,7 @@ def train_model(
     # Load best model state
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
+        torch.save(best_model_state, f"{save_dir}/cnn_best_classifier_model.pth")
         logger.info(f"Loaded best model state (validation accuracy: {best_val_acc:.4f})")
     
     return history
@@ -636,9 +641,15 @@ def main():
         default=10,
         help='Early stopping patience (epochs without improvement, default: 10)'
     )
+    parser.add_argument(
+        '--save_dir',
+        type=str,
+        default='checkpoints',
+        help='Directory to save checkpoints (default: checkpoints)'
+    )
     
     args = parser.parse_args()
-    
+    os.makedirs(args.save_dir, exist_ok=True)
     # Set random seed
     set_seed(args.seed)
     
@@ -655,7 +666,15 @@ def main():
     # Decimation dictionary (from README.md example)
     # Reduces dataset size by sampling every Nth sample for 'regular' class
     decim_dict = {
-        'regular': 50,  # Decimate regular class by factor of 50
+        # 'regular': 90,  # Decimate regular class by factor of 50
+        # 'fence': 90,
+        # 'longboard': 90,
+        # 'manipulation': 90,
+        # 'openclose': 90,
+        # 'running': 90,
+        # 'walk': 90,
+        # 'car': 90,
+        # 'construction': 90,
     }
     
     # Initialize data loader with parameters from README.md
@@ -687,8 +706,8 @@ def main():
     
     # Get class weights from data loader (computed during encoding)
     # These weights help handle class imbalance
-    class_weights = torch.FloatTensor(parser_loader.class_weights)
-    logger.info(f"Class weights for handling imbalance: {class_weights.numpy()}")
+    # class_weights = torch.FloatTensor(parser_loader.class_weights)
+    # logger.info(f"Class weights for handling imbalance: {class_weights.numpy()}")
     
     # ========================================================================
     # Data Splitting: Train / Validation / Test
@@ -724,6 +743,14 @@ def main():
     logger.info(f"Training samples: {len(X_train)} ({100*len(X_train)/len(x):.1f}%)")
     logger.info(f"Validation samples: {len(X_val)} ({100*len(X_val)/len(x):.1f}%)")
     logger.info(f"Test samples: {len(X_test)} ({100*len(X_test)/len(x):.1f}%)")
+    
+    # get class weights from training set
+    # count the number of samples per class in the training set
+    class_counts = Counter(np.argmax(Y_train, axis=1))
+    logger.info(f"Class counts: {class_counts}")
+    # get the class weights
+    class_weights = torch.FloatTensor([x / len(X_train) for x in class_counts.values()])
+    logger.info(f"Class weights: {class_weights.numpy()}")
     
     # ========================================================================
     # Create DataLoaders
@@ -797,8 +824,41 @@ def main():
         weight_decay=args.weight_decay,
         device=device,
         class_weights=class_weights,
-        early_stopping_patience=args.early_stopping_patience
+        early_stopping_patience=args.early_stopping_patience,
+        save_dir=args.save_dir
     )
+
+    # Final evaluation on training set
+    logger.info("=" * 70)
+    logger.info("Final evaluation on training set...")
+    logger.info("=" * 70)
+    
+    criterion = nn.CrossEntropyLoss()
+    train_loss, train_acc, train_predictions, train_targets = evaluate(
+        model, train_loader, criterion, device
+    )
+    
+    logger.info(f"Final Training Loss: {train_loss:.4f}")
+    logger.info(f"Final Training Accuracy: {train_acc:.4f}")
+
+    # Classification report on training set
+    logger.info("\nTraining Set Classification Report:")
+    logger.info("\n" + classification_report(
+        train_targets,
+        train_predictions,
+        target_names=parser_loader.encoder.classes_
+    ))
+    
+    # Confusion matrix for training set
+    train_cm = confusion_matrix(train_targets, train_predictions)
+    ConfusionMatrixDisplay(train_cm, display_labels=parser_loader.encoder.classes_).plot()
+    plt.xticks(ha='right', rotation=45)
+    plt.tight_layout()
+    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_training.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_training.pdf', bbox_inches='tight')
+    plt.close()
+    logger.info("\nTraining Set Confusion Matrix:")
+    logger.info(f"\n{train_cm}")
     
     # ========================================================================
     # Final Evaluation on Validation Set
@@ -814,7 +874,27 @@ def main():
     
     logger.info(f"Final Validation Loss: {val_loss:.4f}")
     logger.info(f"Final Validation Accuracy: {val_acc:.4f}")
+
+    # Also show validation set results for comparison
+    logger.info("\n" + "=" * 70)
+    logger.info("Validation Set Classification Report (for comparison):")
+    logger.info("=" * 70)
+    logger.info("\n" + classification_report(
+        val_targets,
+        val_predictions,
+        target_names=parser_loader.encoder.classes_
+    ))
     
+    # Confusion matrix for validation set
+    val_cm = confusion_matrix(val_targets, val_predictions)
+    ConfusionMatrixDisplay(val_cm, display_labels=parser_loader.encoder.classes_).plot()
+    plt.xticks(ha='right', rotation=45)
+    plt.tight_layout()
+    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_validation.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_validation.pdf', bbox_inches='tight')
+    plt.close()
+    logger.info("\nValidation Set Confusion Matrix:")
+    logger.info(f"\n{val_cm}")
     # ========================================================================
     # Test Set Evaluation
     # ========================================================================
@@ -839,18 +919,14 @@ def main():
     
     # Confusion matrix for test set
     test_cm = confusion_matrix(test_targets, test_predictions)
+    ConfusionMatrixDisplay(test_cm, display_labels=parser_loader.encoder.classes_).plot()
+    plt.xticks(ha='right', rotation=45)
+    plt.tight_layout()
+    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_test.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_test.pdf', bbox_inches='tight')
+    plt.close()
     logger.info("\nTest Set Confusion Matrix:")
     logger.info(f"\n{test_cm}")
-    
-    # Also show validation set results for comparison
-    logger.info("\n" + "=" * 70)
-    logger.info("Validation Set Classification Report (for comparison):")
-    logger.info("=" * 70)
-    logger.info("\n" + classification_report(
-        val_targets,
-        val_predictions,
-        target_names=parser_loader.encoder.classes_
-    ))
     
     # ========================================================================
     # Plot Training History
@@ -859,38 +935,37 @@ def main():
     logger.info("Plotting training history...")
     logger.info("=" * 70)
     
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-    
-    epochs = range(1, len(history['train_loss']) + 1)
-    
-    # Plot loss
-    axes[0].plot(epochs, history['train_loss'], 'b-', label='Train Loss', linewidth=2)
-    axes[0].plot(epochs, history['val_loss'], 'r-', label='Val Loss', linewidth=2)
-    axes[0].set_xlabel('Epoch', fontsize=12)
-    axes[0].set_ylabel('Loss', fontsize=12)
-    axes[0].set_title('Training and Validation Loss', fontsize=14, fontweight='bold')
-    axes[0].grid(True, alpha=0.3)
-    axes[0].legend(fontsize=11)
+    plt.figure()
+    plt.plot(history['train_loss'], 'b-', label='Training', linewidth=2, marker='o', markersize=4)
+    plt.plot(history['val_loss'], 'g-', label='Validation', linewidth=2, marker='s', markersize=4)
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.grid(True, alpha=0.3, ls=":")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_loss.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_loss.pdf', bbox_inches='tight')
+    plt.close()
     
     # Plot accuracy
-    axes[1].plot(epochs, history['train_acc'], 'b-', label='Train Acc', linewidth=2, marker='o', markersize=4)
-    axes[1].plot(epochs, history['val_acc'], 'r-', label='Val Acc', linewidth=2, marker='s', markersize=4)
-    axes[1].set_xlabel('Epoch', fontsize=12)
-    axes[1].set_ylabel('Accuracy', fontsize=12)
-    axes[1].set_title('Training and Validation Accuracy', fontsize=14, fontweight='bold')
-    axes[1].grid(True, alpha=0.3)
-    axes[1].legend(fontsize=11)
-    axes[1].set_ylim([0, 1])
-    
+    plt.figure()
+    plt.plot(history['train_acc'], 'b-', label='Training', linewidth=2, marker='o', markersize=4)
+    plt.plot(history['val_acc'], 'g-', label='Validation', linewidth=2, marker='s', markersize=4)
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.grid(True, alpha=0.3, ls=":")
+    plt.legend()
     plt.tight_layout()
-    plt.savefig('training_history.png', dpi=150, bbox_inches='tight')
-    logger.info("Training history saved to 'training_history.png'")
+    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_acc.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_acc.pdf', bbox_inches='tight')
+    plt.close()
+    logger.info("Training history saved to 'training_history_cnn_classifier_acc.png'")
     
     # Print summary
     logger.info("=" * 70)
     logger.info("Training Summary")
     logger.info("=" * 70)
-    logger.info(f"Total Epochs: {len(epochs)}")
+    logger.info(f"Total Epochs: {len(history['train_loss'])}")
     logger.info(f"Final Training Loss: {history['train_loss'][-1]:.4f}")
     logger.info(f"Final Training Accuracy: {history['train_acc'][-1]:.4f}")
     logger.info(f"Final Validation Loss: {history['val_loss'][-1]:.4f}")
@@ -901,6 +976,22 @@ def main():
     logger.info("=" * 70)
     
     logger.info("Training completed successfully!")
+
+    with open(f'{args.save_dir}/training_info.pkl', 'wb') as f:
+        pickle.dump({
+            'training_loss': history['train_loss'],
+            'training_acc': history['train_acc'],
+            'validation_loss': history['val_loss'],
+            'validation_acc': history['val_acc'],
+            'training_predictions': train_predictions,
+            'training_targets': train_targets,
+            'validation_predictions': val_predictions,
+            'validation_targets': val_targets,
+            'test_loss': test_loss,
+            'test_acc': test_acc,
+            'test_predictions': test_predictions,
+            'test_targets': test_targets,
+        }, f)
 
 
 if __name__ == '__main__':

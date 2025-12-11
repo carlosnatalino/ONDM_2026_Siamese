@@ -80,3 +80,21 @@ The script uses the logging module to provide detailed information about the dat
 ## License
 
 This project is licensed under the GNU General Public License v3.0.
+
+## TODO:
+
+[ ] Plot confusion matrices using https://github.com/wcipriano/pretty-print-confusion-matrix
+
+
+# With VPT (recommended - only 0.5% trainable parameters)
+python das_foundation_model.py \
+    --data_dir /nobackup/carda/datasets/DAS-dataset/data \
+    --mode vpt_deep \
+    --epochs 50
+
+# With MAE pre-training + VPT (highest expected accuracy)
+python das_foundation_model.py \
+    --data_dir /nobackup/carda/datasets/DAS-dataset/data \
+    --mode vpt_deep \
+    --pretrain \
+    --pretrain_epochs 100

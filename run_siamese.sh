@@ -15,6 +15,10 @@ cd $TMPDIR/icmlcn
 # 1. increase epochs
 # 2. increase batch size
 
+FOLDER_NAME=$(date +"%Y%m%d_%H%M%S")
+FULL_PATH=/mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/siamese/$FOLDER_NAME
+mkdir -p $FULL_PATH
+
 python siamese.py \
     --embedding_dim 512 \
     --batch_size 128 \
@@ -24,5 +28,7 @@ python siamese.py \
     --test_size 0.2 \
     --val_size 0.2 \
     --epochs 10 \
-    --save_dir /mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn \
+    --save_dir $FULL_PATH \
     --data-dir /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data
+
+cp $HOME/slurm-${SLURM_JOB_ID}.out $FULL_PATH/slurm-${SLURM_JOB_ID}.out

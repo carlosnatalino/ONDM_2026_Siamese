@@ -40,15 +40,15 @@ logging.basicConfig(level=logging.INFO)
 def get_dataset(data_dir):
     decim_dict = {
         # The 'regular' label will be decimated by a factor of 50
-        'regular': 90,
-        'fence': 90,
-        'longboard': 90,
-        'manipulation': 90,
-        'openclose': 90,
-        'running': 90,
-        'walk': 90,
-        'car': 90,
-        'construction': 90,
+        # 'regular': 90,
+        # 'fence': 90,
+        # 'longboard': 90,
+        # 'manipulation': 90,
+        # 'openclose': 90,
+        # 'running': 90,
+        # 'walk': 90,
+        # 'car': 90,
+        # 'construction': 90,
     }
 
     # Initializing the DASDataLoader with dataset parameters
@@ -110,20 +110,34 @@ def get_device():
 class TripletDataset(Dataset):
     """
     Dataset that generates triplets (anchor, positive, negative) for triplet loss training.
+    
+    Uses class-balanced sampling to ensure equal representation of all classes,
+    regardless of their original sample counts.
     """
-    def __init__(self, x, y, triplets_per_sample=2, seed=42, augment=False):
+    def __init__(self, x, y, triplets_per_sample=2, seed=42, augment=False, class_balanced=True):
         self.x = torch.FloatTensor(x)
         self.y = torch.LongTensor(y)
         self.triplets_per_sample = triplets_per_sample
         self.seed = seed
         self.rng = np.random.RandomState(seed)
         self.augment = augment
+        self.class_balanced = class_balanced
         self.class_indices = {c.item(): np.where(self.y.numpy() == c.item())[0] 
                               for c in torch.unique(self.y)}
         self.classes = list(self.class_indices.keys())
+        self.n_classes = len(self.classes)
+        
+        # For class-balanced sampling: compute samples per class per epoch
+        # Each class contributes equally to the total dataset length
+        self.min_class_size = min(len(indices) for indices in self.class_indices.values())
+        self.samples_per_class = max(self.min_class_size, 100)  # At least 100 samples per class
         
     def __len__(self):
-        return len(self.x) * self.triplets_per_sample
+        if self.class_balanced:
+            # Equal contribution from each class
+            return self.n_classes * self.samples_per_class * self.triplets_per_sample
+        else:
+            return len(self.x) * self.triplets_per_sample
     
     def _augment(self, sample):
         """Simple augmentation: noise injection and frequency masking"""
@@ -146,9 +160,17 @@ class TripletDataset(Dataset):
         return sample
     
     def __getitem__(self, idx):
-        anchor_idx = idx % len(self.x)
+        if self.class_balanced:
+            # Class-balanced sampling: first select class uniformly, then sample within class
+            anchor_class = self.classes[idx % self.n_classes]
+            anchor_idx = self.rng.choice(self.class_indices[anchor_class])
+        else:
+            # Original behavior: iterate through all samples
+            anchor_idx = idx % len(self.x)
+            anchor_class = self.y[anchor_idx].item()
+        
         anchor_sample = self.x[anchor_idx]
-        anchor_label = self.y[anchor_idx].item()
+        anchor_label = anchor_class
 
         # Select positive sample (same class, different sample)
         positive_candidates = [i for i in self.class_indices[anchor_label] if i != anchor_idx]
@@ -180,13 +202,17 @@ class EpisodicBatchSampler(Sampler):
     """
     Samples batches in an episodic manner for prototypical networks training.
     Each batch contains n_way classes with n_support + n_query samples per class.
+    
+    Supports class-balanced sampling to ensure all classes appear with equal frequency
+    across episodes, preventing majority class domination.
     """
-    def __init__(self, labels, n_way, n_support, n_query, n_episodes):
+    def __init__(self, labels, n_way, n_support, n_query, n_episodes, class_balanced=True):
         self.labels = np.array(labels)
         self.n_way = n_way
         self.n_support = n_support
         self.n_query = n_query
         self.n_episodes = n_episodes
+        self.class_balanced = class_balanced
         
         self.classes = np.unique(self.labels)
         self.class_indices = {c: np.where(self.labels == c)[0] for c in self.classes}
@@ -198,20 +224,77 @@ class EpisodicBatchSampler(Sampler):
         if len(self.valid_classes) < n_way:
             print(f"Warning: Only {len(self.valid_classes)} classes have enough samples. Adjusting n_way.")
             self.n_way = len(self.valid_classes)
+        
+        # For class-balanced sampling: precompute episode class assignments
+        # to ensure each class appears roughly equal number of times
+        if self.class_balanced and len(self.valid_classes) > 0:
+            self._precompute_balanced_episodes()
+    
+    def _precompute_balanced_episodes(self):
+        """
+        Precompute class assignments for episodes to ensure balanced representation.
+        Each class should appear in approximately equal number of episodes.
+        """
+        n_valid = len(self.valid_classes)
+        
+        # Calculate how many times each class should appear across all episodes
+        # Each episode has n_way classes, so total class slots = n_episodes * n_way
+        total_slots = self.n_episodes * self.n_way
+        appearances_per_class = total_slots // n_valid
+        
+        # Create a pool of class indices where each class appears equally
+        class_pool = []
+        for c in self.valid_classes:
+            class_pool.extend([c] * appearances_per_class)
+        
+        # Fill remaining slots if any
+        remaining = total_slots - len(class_pool)
+        if remaining > 0:
+            extra_classes = np.random.choice(self.valid_classes, remaining, replace=False)
+            class_pool.extend(extra_classes)
+        
+        # Shuffle the pool
+        np.random.shuffle(class_pool)
+        
+        # Split into episodes
+        self.precomputed_episodes = []
+        for i in range(self.n_episodes):
+            start_idx = i * self.n_way
+            episode_classes = class_pool[start_idx:start_idx + self.n_way]
+            # Ensure uniqueness within episode (shouldn't be an issue but safety check)
+            if len(set(episode_classes)) < self.n_way:
+                # Fallback: sample randomly
+                episode_classes = np.random.choice(self.valid_classes, self.n_way, replace=False)
+            self.precomputed_episodes.append(list(episode_classes))
     
     def __iter__(self):
-        for _ in range(self.n_episodes):
-            # Sample n_way classes
-            episode_classes = np.random.choice(self.valid_classes, self.n_way, replace=False)
+        for episode_idx in range(self.n_episodes):
+            if self.class_balanced and hasattr(self, 'precomputed_episodes'):
+                # Use precomputed balanced class selection
+                episode_classes = self.precomputed_episodes[episode_idx]
+            else:
+                # Random sampling (original behavior)
+                episode_classes = np.random.choice(self.valid_classes, self.n_way, replace=False)
             
             batch_indices = []
             for c in episode_classes:
                 # Sample n_support + n_query samples from this class
-                class_samples = np.random.choice(
-                    self.class_indices[c], 
-                    self.n_support + self.n_query, 
-                    replace=False
-                )
+                n_samples_needed = self.n_support + self.n_query
+                class_size = len(self.class_indices[c])
+                
+                if class_size >= n_samples_needed:
+                    class_samples = np.random.choice(
+                        self.class_indices[c], 
+                        n_samples_needed, 
+                        replace=False
+                    )
+                else:
+                    # If not enough samples, sample with replacement
+                    class_samples = np.random.choice(
+                        self.class_indices[c], 
+                        n_samples_needed, 
+                        replace=True
+                    )
                 batch_indices.extend(class_samples)
             
             yield batch_indices
@@ -456,9 +539,13 @@ class PrototypicalClassifier:
         lr=1e-3, 
         weight_decay=1e-4,
         args=None,
+        class_balanced=True,
     ):
         """
         Train using Prototypical Networks approach with episodic training.
+        
+        Args:
+            class_balanced: If True, ensures each class appears equally often across episodes.
         """
         self.embedding_network.train()
         
@@ -490,7 +577,8 @@ class PrototypicalClassifier:
                 n_way=n_way, 
                 n_support=n_support, 
                 n_query=n_query,
-                n_episodes=n_episodes_train
+                n_episodes=n_episodes_train,
+                class_balanced=class_balanced
             )
             
             for batch_indices in train_sampler:
@@ -557,7 +645,7 @@ class PrototypicalClassifier:
             best = ""
             if val_dataset is not None:
                 val_acc, val_loss = self._validate_prototypical(
-                    val_dataset, n_way, n_support, n_query, n_episodes_val
+                    val_dataset, n_way, n_support, n_query, n_episodes_val, class_balanced
                 )
                 self.training_history['val_acc'].append(val_acc)
                 self.training_history['val_loss'].append(val_loss)
@@ -590,7 +678,7 @@ class PrototypicalClassifier:
             torch.save(checkpoint, save_path)
             print(f"Best model saved to '{save_path}'")
     
-    def _validate_prototypical(self, val_dataset, n_way, n_support, n_query, n_episodes):
+    def _validate_prototypical(self, val_dataset, n_way, n_support, n_query, n_episodes, class_balanced=True):
         """Validate using episodic evaluation."""
         self.embedding_network.eval()
         total_loss = 0.0
@@ -602,7 +690,8 @@ class PrototypicalClassifier:
             n_way=n_way,
             n_support=n_support,
             n_query=n_query,
-            n_episodes=n_episodes
+            n_episodes=n_episodes,
+            class_balanced=class_balanced
         )
         
         with torch.no_grad():
@@ -1296,6 +1385,7 @@ def main(args):
     print(f"\nInput dimension: {input_dim}")
     print(f"Number of training classes: {n_train_classes}")
     print(f"Training class names: {train_class_names}")
+    print(f"Class-balanced sampling: {'Enabled' if args.class_balanced else 'Disabled'}")
     
     # Initialize model
     model = PrototypicalClassifier(
@@ -1314,8 +1404,10 @@ def main(args):
         print("="*60)
         
         triplet_train = TripletDataset(X_train_selected, Y_train_selected, triplets_per_sample=2, 
-                                        seed=args.seed, augment=args.augment)
-        triplet_val = TripletDataset(X_val, Y_val, triplets_per_sample=1, seed=args.seed)
+                                        seed=args.seed, augment=args.augment, 
+                                        class_balanced=args.class_balanced)
+        triplet_val = TripletDataset(X_val, Y_val, triplets_per_sample=1, seed=args.seed,
+                                     class_balanced=args.class_balanced)
         
         triplet_train_loader = DataLoader(
             triplet_train, batch_size=args.batch_size, shuffle=True,
@@ -1351,7 +1443,8 @@ def main(args):
         epochs=args.epochs,
         lr=args.lr,
         weight_decay=args.weight_decay,
-        args=args
+        args=args,
+        class_balanced=args.class_balanced
     )
     
     print("\nTraining completed!")
@@ -1521,6 +1614,8 @@ if __name__ == "__main__":
                         help='Early stopping patience')
     parser.add_argument('--augment', action='store_true', default=True,
                         help='Use data augmentation')
+    parser.add_argument('--class_balanced', action='store_true', default=True,
+                        help='Use class-balanced sampling to ensure equal representation of all classes')
     
     # Evaluation parameters
     parser.add_argument('--n_eval_trials', type=int, default=1000,
