@@ -1,11 +1,43 @@
-venv
-__pycache__
+# Python
+venv/
+.venv/
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.pyw
-*.pyz
-*.pywz
-*.pyzw
-*.pyzwz
-*.pyzwzw
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+
+# Training outputs
+siamese_multisim_*/
+ffnn_results_*/
+cnn_results_*/
+*.log
+*.pth
+*.pt
+*.pkl
+training_history.png
+confusion_matrix.png
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (large files)
+*.h5
+*.hdf5
+data/

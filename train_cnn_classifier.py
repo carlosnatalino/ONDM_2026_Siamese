@@ -33,6 +33,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.utils.class_weight import compute_class_weight
 
 import torch
 import torch.nn as nn
@@ -208,6 +209,9 @@ class DASEventClassifier(nn.Module):
             padding=0
         )
         
+        # BatchNorm after first conv layer
+        self.bn1 = nn.BatchNorm1d(64)
+        
         # LeakyReLU activation (negative_slope=0.01 is default)
         # From paper/figure - LeakyReLU helps with gradient flow
         self.leaky_relu1 = nn.LeakyReLU(negative_slope=0.01)
@@ -228,6 +232,9 @@ class DASEventClassifier(nn.Module):
             padding=0
         )
         
+        # BatchNorm after second conv layer
+        self.bn2 = nn.BatchNorm1d(256)
+        
         # LeakyReLU activation
         self.leaky_relu2 = nn.LeakyReLU(negative_slope=0.01)
         
@@ -243,16 +250,23 @@ class DASEventClassifier(nn.Module):
         
         # First fully connected layer
         # Input: [batch, 32256]
-        # Output: [batch, 1024]
+        # Output: [batch, 256] - Aggressively reduced from 512 to prevent overfitting
         self.fc1 = nn.Linear(
             in_features=256 * 126,  # 32256 from paper/figure
-            out_features=1024       # From paper/figure
+            out_features=256        # Aggressively reduced to prevent overfitting
         )
         
+        # BatchNorm after FC layer
+        self.bn3 = nn.BatchNorm1d(256)
+        
+        # Add dropout after conv layers for additional regularization
+        self.dropout_conv = nn.Dropout(p=0.3)
+        
         # Dropout for regularization to prevent overfitting
-        # The model has 33M parameters and is prone to overfitting
+        # Increased to 0.7 for very strong regularization
+        # The model still has large capacity and is severely overfitting
         # Dropout randomly sets some neurons to zero during training
-        self.dropout = nn.Dropout(p=self.dropout_rate)
+        self.dropout = nn.Dropout(p=0.7)  # Aggressive dropout
         
         # Activation function
         # NOTE: The paper mentions Sigmoid, but this causes vanishing gradients.
@@ -269,10 +283,10 @@ class DASEventClassifier(nn.Module):
         self._initialize_weights()
         
         # Output layer
-        # Input: [batch, 1024]
+        # Input: [batch, 256] - Aggressively reduced
         # Output: [batch, num_classes]
         self.fc2 = nn.Linear(
-            in_features=1024,
+            in_features=256,  # Aggressively reduced from 512
             out_features=num_classes
         )
         
@@ -316,22 +330,27 @@ class DASEventClassifier(nn.Module):
             x = x.unsqueeze(1)  # Add channel dimension
         
         # First convolutional block
-        x = self.conv1(x)        # [batch, 64, 2042]
+        x = self.conv1(x)         # [batch, 64, 2042]
+        x = self.bn1(x)           # [batch, 64, 2042] - BatchNorm
         x = self.leaky_relu1(x)   # [batch, 64, 2042]
         x = self.pool1(x)         # [batch, 64, 510]
+        x = self.dropout_conv(x)  # [batch, 64, 510] - Dropout after pooling
         
         # Second convolutional block
         x = self.conv2(x)         # [batch, 256, 504]
-        x = self.leaky_relu2(x)  # [batch, 256, 504]
+        x = self.bn2(x)           # [batch, 256, 504] - BatchNorm
+        x = self.leaky_relu2(x)   # [batch, 256, 504]
         x = self.pool2(x)         # [batch, 256, 126]
+        x = self.dropout_conv(x)  # [batch, 256, 126] - Dropout after pooling
         
         # Flatten
         x = self.flatten(x)       # [batch, 32256]
         
         # Fully connected layers
-        x = self.fc1(x)           # [batch, 1024]
-        x = self.activation(x)     # [batch, 1024] - ReLU or Sigmoid
-        x = self.dropout(x)        # [batch, 1024] - Dropout for regularization (only active during training)
+        x = self.fc1(x)           # [batch, 256] - Aggressively reduced
+        x = self.bn3(x)           # [batch, 256] - BatchNorm
+        x = self.activation(x)    # [batch, 256] - ReLU or Sigmoid
+        x = self.dropout(x)       # [batch, 256] - Very strong dropout (0.7)
         x = self.fc2(x)           # [batch, num_classes]
         
         return x
@@ -481,6 +500,14 @@ def train_model(
         weight_decay=weight_decay
     )
     
+    # Learning rate scheduler: StepLR (como no paper)
+    # Reduz learning rate por 0.1 após 50 epochs (conforme paper)
+    scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer,
+        step_size=50,  # Reduz após 50 epochs
+        gamma=0.1       # Multiplica por 0.1 (reduz 10x)
+    )
+    
     # Training history
     history = {
         'train_loss': [],
@@ -513,6 +540,13 @@ def train_model(
         history['train_acc'].append(train_acc)
         history['val_loss'].append(val_loss)
         history['val_acc'].append(val_acc)
+        
+        # Update learning rate (StepLR - step após cada epoch)
+        old_lr = optimizer.param_groups[0]['lr']
+        scheduler.step()
+        new_lr = optimizer.param_groups[0]['lr']
+        if new_lr != old_lr:
+            logger.info(f"Learning rate reduced from {old_lr:.2e} to {new_lr:.2e}")
         
         # Early stopping: save best model and check for improvement
         if val_acc > best_val_acc:
@@ -571,8 +605,8 @@ def main():
     parser.add_argument(
         '--batch_size',
         type=int,
-        default=64,
-        help='Batch size (default: 64)'
+        default=256,
+        help='Batch size (default: 256, from paper)'
     )
     parser.add_argument(
         '--lr',
