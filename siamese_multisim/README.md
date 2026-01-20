@@ -179,7 +179,7 @@ This code is part of research for DAS event classification. Please cite appropri
 
 ## Authors
 
-- Andrei Campeanu
+- Andrei Ribeiro
 - Carlos Natalino
 
 ## Citation

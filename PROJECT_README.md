@@ -1,20 +1,28 @@
 # DAS Event Classification: Comparative Study
 
-This repository contains implementations of three neural network approaches for event classification on Distributed Acoustic Sensing (DAS) signals from Φ-OTDR systems.
+This repository contains implementations of multiple neural network approaches for event classification on Distributed Acoustic Sensing (DAS) signals from Φ-OTDR systems.
 
 ## Overview
 
-This project compares three distinct approaches to DAS event classification:
+This project compares several distinct approaches to DAS event classification:
 
+### Traditional Classifiers
 1. **CNN Classifier** (`train_cnn_classifier.py`): 1D Convolutional Neural Network
-2. **FFNN Classifier** (`train_ffnn_classifier.py`): Feed-Forward Neural Network  
-3. **Siamese Network** (`siamese_multisim/`): Multi-similarity Siamese network for few-shot learning
+2. **MLP Classifier** (`train_mlp_classifier.py`): Feed-Forward Neural Network
+
+### Metric Learning Approaches  
+3. **Siamese Network** (`siamese.py`): Contrastive learning with embedding networks
+4. **Siamese with Triplet Loss** (`siamese_triplet.py`): Prototypical Networks with triplet loss
+5. **Multi-Similarity Siamese** (`siamese_multisim/`): Advanced Siamese with 5 similarity metrics for few-shot learning
+
+### Foundation Models
+6. **DAS Foundation Model** (`das_foundation_model.py`): Transfer learning approach
 
 ## Repository Structure
 
 ```
 .
-├── siamese_multisim/          # Siamese network package
+├── siamese_multisim/          # Multi-similarity Siamese network package
 │   ├── models.py              # Network architectures
 │   ├── training.py            # Training components
 │   ├── evaluation.py          # Evaluation utilities
@@ -22,10 +30,14 @@ This project compares three distinct approaches to DAS event classification:
 │   ├── main.py                # Main training script
 │   └── README.md              # Detailed documentation
 ├── train_cnn_classifier.py    # CNN training script
-├── train_ffnn_classifier.py   # FFNN training script
+├── train_mlp_classifier.py    # MLP training script
+├── siamese.py                 # Siamese with contrastive loss
+├── siamese_triplet.py         # Prototypical Networks with triplet loss
+├── das_foundation_model.py    # Foundation model approach
+├── compare_approaches.py      # Generate comparison plots for paper
 ├── data_loader.py             # DAS dataset loader
 ├── requirements.txt           # Python dependencies
-└── README.md                  # This file
+└── PROJECT_README.md          # This file
 ```
 
 ## Dataset
@@ -203,7 +215,7 @@ This code is provided for research purposes. Please cite appropriately if used i
 
 ## Authors
 
-- Andrei Campeanu
+- Andrei Ribeiro
 - Carlos Natalino
 
 ## Contact

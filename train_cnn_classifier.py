@@ -977,6 +977,33 @@ def main():
     
     logger.info("Training completed successfully!")
 
+    # Save results for visualization notebook
+    # Calculate metrics for the test set
+    from sklearn.metrics import balanced_accuracy_score, f1_score
+    
+    test_balanced_acc = balanced_accuracy_score(test_targets, test_predictions)
+    test_f1_macro = f1_score(test_targets, test_predictions, average='macro')
+    test_f1_weighted = f1_score(test_targets, test_predictions, average='weighted')
+    
+    # Save history for notebook (training curves)
+    np.save(f'{args.save_dir}/history.npy', history)
+    logger.info(f"✓ Saved training history to {args.save_dir}/history.npy")
+    
+    # Save test results for notebook (metrics + confusion matrix)
+    test_results = {
+        'accuracy': test_acc,
+        'balanced_accuracy': test_balanced_acc,
+        'f1_macro': test_f1_macro,
+        'f1_weighted': test_f1_weighted,
+        'confusion_matrix': test_cm,
+        'class_names': list(parser_loader.encoder.classes_),
+        'predictions': np.array(test_predictions),
+        'targets': np.array(test_targets)
+    }
+    np.save(f'{args.save_dir}/test_results.npy', test_results)
+    logger.info(f"✓ Saved test results to {args.save_dir}/test_results.npy")
+
+    # Also save as pickle for compatibility
     with open(f'{args.save_dir}/training_info.pkl', 'wb') as f:
         pickle.dump({
             'training_loss': history['train_loss'],

@@ -26,7 +26,7 @@ References:
 - Wang et al., "Multi-Similarity Loss with General Pair Weighting" (2019)
 - Tomasov et al., "Enhancing Perimeter Protection using Φ-OTDR and CNN" (2023)
 
-Author: Andrei Campeanu, Carlos Natalino
+Author: Andrei Ribeiro, Carlos Natalino
 Date: January 2026
 """
 

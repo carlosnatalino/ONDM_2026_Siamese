@@ -16,7 +16,7 @@ References:
 - Koch et al., "Siamese Neural Networks for One-shot Image Recognition" (2015)
 - Snell et al., "Prototypical Networks for Few-shot Learning" (2017)
 
-Author: Andrei Campeanu, Carlos Natalino
+Author: Andrei Ribeiro, Carlos Natalino
 Date: January 2026
 """
 

@@ -11,7 +11,7 @@ This module provides comprehensive visualization including:
 - Real-world simulation results
 - Attention weights visualization
 
-Author: Andrei Campeanu, Carlos Natalino
+Author: Andrei Ribeiro, Carlos Natalino
 Date: January 2026
 """
 

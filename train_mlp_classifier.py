@@ -27,6 +27,7 @@ import sys
 import logging
 import random
 import argparse
+import datetime
 from pathlib import Path
 
 import numpy as np
@@ -760,6 +761,36 @@ def main():
     logger.info("=" * 70)
     
     logger.info("Training completed successfully!")
+    
+    # Save results for visualization notebook
+    output_dir = "mlp_results_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    Path(output_dir).mkdir(exist_ok=True, parents=True)
+    
+    # Calculate metrics
+    from sklearn.metrics import balanced_accuracy_score, f1_score
+    test_balanced_acc = balanced_accuracy_score(test_targets, test_predictions)
+    test_f1_macro = f1_score(test_targets, test_predictions, average='macro')
+    test_f1_weighted = f1_score(test_targets, test_predictions, average='weighted')
+    test_cm = confusion_matrix(test_targets, test_predictions)
+    
+    # Save history for notebook
+    np.save(f'{output_dir}/history.npy', history)
+    logger.info(f"✓ Saved training history to {output_dir}/history.npy")
+    
+    # Save test results for notebook
+    test_results = {
+        'accuracy': test_acc,
+        'balanced_accuracy': test_balanced_acc,
+        'f1_macro': test_f1_macro,
+        'f1_weighted': test_f1_weighted,
+        'confusion_matrix': test_cm,
+        'class_names': list(parser_loader.encoder.classes_),
+        'predictions': np.array(test_predictions),
+        'targets': np.array(test_targets)
+    }
+    np.save(f'{output_dir}/test_results.npy', test_results)
+    logger.info(f"✓ Saved test results to {output_dir}/test_results.npy")
+    logger.info(f"✓ All results saved to {output_dir}/")
 
 
 if __name__ == '__main__':

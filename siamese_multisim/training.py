@@ -13,7 +13,7 @@ References:
 - Snell et al., "Prototypical Networks for Few-shot Learning" (2017)
 - Wang et al., "Multi-Similarity Loss with General Pair Weighting" (2019)
 
-Author: Andrei Campeanu, Carlos Natalino
+Author: Andrei Ribeiro, Carlos Natalino
 Date: January 2026
 """
 

@@ -28,7 +28,7 @@ Architecture References:
 - Koch et al., "Siamese Neural Networks for One-shot Image Recognition" (2015)
 - Snell et al., "Prototypical Networks for Few-shot Learning" (2017)
 
-Author: Andrei Campeanu, Carlos Natalino
+Author: Andrei Ribeiro, Carlos Natalino
 Date: January 2026
 """
 
@@ -766,6 +766,24 @@ def main():
         results_to_save = {k: v for k, v in results.items() 
                           if k not in ['test_results'] or 'prototypes' not in v}
         pickle.dump(results_to_save, f)
+    
+    # Save results in format compatible with visualization notebook
+    np.save(os.path.join(output_dir, 'history.npy'), history)
+    
+    test_results_for_notebook = {
+        'accuracy': test_results_5class['accuracy'],
+        'balanced_accuracy': test_results_5class['balanced_accuracy'],
+        'f1_macro': test_results_5class['f1_macro'],
+        'f1_weighted': test_results_5class['f1_weighted'],
+        'confusion_matrix': test_results_5class['confusion_matrix'],
+        'class_names': train_class_names,
+        'predictions': test_results_5class['predictions'],
+        'targets': y_test_train
+    }
+    np.save(os.path.join(output_dir, 'test_results.npy'), test_results_for_notebook)
+    
+    logger.info(f"✓ Saved training history to {output_dir}/history.npy")
+    logger.info(f"✓ Saved test results to {output_dir}/test_results.npy")
     
     # =========================================================================
     # Final Summary

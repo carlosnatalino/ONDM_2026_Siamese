@@ -13,7 +13,7 @@ References:
 - Vinyals et al., "Matching Networks for One Shot Learning" (2016)
 - Bendale & Boult, "Towards Open Set Deep Networks" (2016)
 
-Author: Andrei Campeanu, Carlos Natalino
+Author: Andrei Ribeiro, Carlos Natalino
 Date: January 2026
 """
 
