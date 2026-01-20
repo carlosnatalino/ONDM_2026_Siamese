@@ -1,0 +1,197 @@
+This job can be monitored from: https://job.c3se.chalmers.se/alvis/5427485
+'/cephyr/users/carda/Alvis/icmlcn/' -> '/local/tmp.5427485/icmlcn'
+'/cephyr/users/carda/Alvis/icmlcn/data_loader.py' -> '/local/tmp.5427485/icmlcn/data_loader.py'
+'/cephyr/users/carda/Alvis/icmlcn/siamese.py' -> '/local/tmp.5427485/icmlcn/siamese.py'
+'/cephyr/users/carda/Alvis/icmlcn/cnn.py' -> '/local/tmp.5427485/icmlcn/cnn.py'
+'/cephyr/users/carda/Alvis/icmlcn/siamese_triplet.py' -> '/local/tmp.5427485/icmlcn/siamese_triplet.py'
+Arguments: Namespace(embedding_dim=512, network='cnn', n_way=5, n_support=5, n_query=15, n_episodes_train=100, n_episodes_val=50, margin=1.0, temperature=1.0, batch_size=256, epochs=20, triplet_pretrain_epochs=50, lr=0.001, weight_decay=0.0001, early_stopping_patience=25, augment=True, n_eval_trials=1000, n_osr_trials=500, data_dir='/mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data', test_size=0.2, val_size=0.2, train_classes=[0, 2, 4, 6, 8], save_dir='/mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021', seed=42)
+INFO:data_loader:Parsing dataset for label [openclose]...
+INFO:data_loader:Parsing dataset for label [walk]...
+INFO:data_loader:Parsing dataset for label [running]...
+INFO:data_loader:Parsing dataset for label [regular]...
+INFO:data_loader:Parsing dataset for label [car]...
+INFO:data_loader:Parsing dataset for label [fence]...
+INFO:data_loader:Parsing dataset for label [construction]...
+INFO:data_loader:Parsing dataset for label [manipulation]...
+INFO:data_loader:Parsing dataset for label [longboard]...
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/walk/walking2_2023-04-17T122153+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/openclose/openingclosing_2023-04-17T122658+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/regular/regularshit_2023-04-17T130103+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/running/running_2023-04-17T122413+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/construction/reconstruction1_2023-06-06T150714+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/fence/fence_2023-04-17T123117+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/car/auto2_2023-04-17T124510+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/manipulation/manipulation_2023-04-17T122847+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/longboard/longboard_2023-04-17T123543+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/fence/kopani_plot_2023-11-07T150207Z.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/car/auto4_2023-06-06T144655+0100.h5
+WARNING:data_loader:Total samples extracted for openclose: 6792
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/longboard/longboardroad_2023-04-17T123638+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/car/auto4_2023-06-06T145055+0100.h5
+WARNING:data_loader:Total samples extracted for longboard: 15367
+WARNING:data_loader:Total samples extracted for running: 13877
+WARNING:data_loader:Total samples extracted for manipulation: 17710
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/walk/walking_2023-04-17T121933+0100.h5
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/fence/plot_2023-11-07T150119Z.h5
+WARNING:data_loader:Total samples extracted for walk: 19155
+WARNING:data_loader:Total samples extracted for fence: 43981
+WARNING:data_loader:Total samples extracted for construction: 54832
+INFO:data_loader:Processing file: /mimer/NOBACKUP/groups/naiss2025-5-426/datasets/DAS-dataset/data/car/auto_2023-04-17T124152+0100.h5
+WARNING:data_loader:Total samples extracted for car: 58017
+WARNING:data_loader:Total samples extracted for regular: 210023
+INFO:data_loader:Applying preprocessing transformation to dataset...
+INFO:data_loader:Applying preprocessing function: <function fft at 0x14ad4cd7c400>
+INFO:data_loader:Filtering out noisy samples...
+INFO:data_loader:Encoding labels...
+WARNING:data_loader:Sample counts per category: Counter({'regular': 210023, 'construction': 29169, 'car': 20957, 'manipulation': 17223, 'running': 12927, 'walk': 12714, 'longboard': 11908, 'openclose': 5943, 'fence': 3601})
+/apps/Arch/software/scikit-learn/1.3.1-gfbf-2023a/lib/python3.11/site-packages/sklearn/preprocessing/_label.py:114: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+  y = column_or_1d(y, warn=True)
+WARNING:data_loader:Computed class weights: [ 1.72026849  1.23595827 10.01157086  3.02751652  2.09322805  6.06624039
+  0.1716558   2.78886568  2.83558807]
+WARNING:data_loader:Label encoding complete: ['car' 'construction' 'fence' 'longboard' 'manipulation' 'openclose'
+ 'regular' 'running' 'walk']
+Normalization statistics saved to /mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021/train_mean.npy and train_std.npy
+Training samples (before filtering): 194679
+Validation samples: 64893
+Test samples: 64893
+
+Filtering training data to classes: [0, 2, 4, 6, 8]
+Class names: ['car', 'fence', 'manipulation', 'regular', 'walk']
+Training samples (after filtering): 158712
+Label mapping: {0: 0, 2: 1, 4: 2, 6: 3, 8: 4}
+
+Class distribution:
+Train (selected):	0: 12575	1: 2161 	2: 10334	3: 126014	4: 7628 	
+Val (all):	0: 4191 	1: 5834 	2: 720  	3: 2381 	4: 3445 	5: 1189 	6: 42004	7: 2586 	8: 2543 	
+Test (all):	0: 4191 	1: 5834 	2: 720  	3: 2382 	4: 3444 	5: 1189 	6: 42005	7: 2585 	8: 2543 	
+
+Input dimension: 2048
+Number of training classes: 5
+Training class names: ['car', 'fence', 'manipulation', 'regular', 'walk']
+Using CUDA: Tesla V100-SXM2-32GB
+
+============================================================
+Phase 1: Triplet Loss Pre-training
+============================================================
+[Triplet] Epoch  1: Train Loss=0.2240 | Val Loss=0.3215 | Time=920.75s | ETA=13:31:56  * BEST *
+[Triplet] Epoch  2: Train Loss=0.1654 | Val Loss=0.2997 | Time=917.79s | ETA=13:15:24  * BEST *
+[Triplet] Epoch  3: Train Loss=0.1458 | Val Loss=0.2995 | Time=918.37s | ETA=12:59:51  * BEST *
+[Triplet] Epoch  4: Train Loss=0.1344 | Val Loss=0.2863 | Time=919.11s | ETA=12:44:34  * BEST *
+[Triplet] Epoch  5: Train Loss=0.1271 | Val Loss=0.2894 | Time=922.87s | ETA=12:29:49
+[Triplet] Epoch  6: Train Loss=0.1227 | Val Loss=0.2786 | Time=925.09s | ETA=12:15:09  * BEST *
+[Triplet] Epoch  7: Train Loss=0.1174 | Val Loss=0.2802 | Time=922.27s | ETA=11:59:58
+[Triplet] Epoch  8: Train Loss=0.1126 | Val Loss=0.2666 | Time=914.28s | ETA=11:44:02  * BEST *
+[Triplet] Epoch  9: Train Loss=0.1089 | Val Loss=0.2708 | Time=917.62s | ETA=11:28:31
+[Triplet] Epoch 10: Train Loss=0.1042 | Val Loss=0.2749 | Time=919.91s | ETA=11:13:12
+[Triplet] Epoch 11: Train Loss=0.1013 | Val Loss=0.2632 | Time=925.49s | ETA=10:58:12  * BEST *
+[Triplet] Epoch 12: Train Loss=0.0972 | Val Loss=0.2616 | Time=916.40s | ETA=10:42:39  * BEST *
+[Triplet] Epoch 13: Train Loss=0.0939 | Val Loss=0.2616 | Time=924.37s | ETA=10:27:32
+[Triplet] Epoch 14: Train Loss=0.0915 | Val Loss=0.2677 | Time=921.64s | ETA=10:12:15
+[Triplet] Epoch 15: Train Loss=0.0899 | Val Loss=0.2635 | Time=915.24s | ETA=09:56:42
+[Triplet] Epoch 16: Train Loss=0.0872 | Val Loss=0.2556 | Time=922.32s | ETA=09:41:27  * BEST *
+[Triplet] Epoch 17: Train Loss=0.0848 | Val Loss=0.2574 | Time=921.32s | ETA=09:26:09
+[Triplet] Epoch 18: Train Loss=0.0836 | Val Loss=0.2589 | Time=918.73s | ETA=09:10:46
+[Triplet] Epoch 19: Train Loss=0.0807 | Val Loss=0.2583 | Time=917.79s | ETA=08:55:22
+[Triplet] Epoch 20: Train Loss=0.0794 | Val Loss=0.2576 | Time=920.31s | ETA=08:40:02
+[Triplet] Epoch 21: Train Loss=0.0789 | Val Loss=0.2535 | Time=925.97s | ETA=08:24:50  * BEST *
+[Triplet] Epoch 22: Train Loss=0.0773 | Val Loss=0.2584 | Time=918.54s | ETA=08:09:27
+[Triplet] Epoch 23: Train Loss=0.0753 | Val Loss=0.2672 | Time=920.80s | ETA=07:54:08
+[Triplet] Epoch 24: Train Loss=0.0753 | Val Loss=0.2552 | Time=917.90s | ETA=07:38:45
+[Triplet] Epoch 25: Train Loss=0.0751 | Val Loss=0.2554 | Time=917.51s | ETA=07:23:22
+[Triplet] Epoch 26: Train Loss=0.0726 | Val Loss=0.2650 | Time=922.26s | ETA=07:08:04
+[Triplet] Epoch 27: Train Loss=0.0723 | Val Loss=0.2618 | Time=922.40s | ETA=06:52:45
+[Triplet] Epoch 28: Train Loss=0.0709 | Val Loss=0.2624 | Time=919.54s | ETA=06:37:25
+[Triplet] Epoch 29: Train Loss=0.0703 | Val Loss=0.2622 | Time=921.08s | ETA=06:22:05
+[Triplet] Epoch 30: Train Loss=0.0710 | Val Loss=0.2570 | Time=919.21s | ETA=06:06:44
+[Triplet] Epoch 31: Train Loss=0.0698 | Val Loss=0.2610 | Time=916.81s | ETA=05:51:22
+[Triplet] Epoch 32: Train Loss=0.0700 | Val Loss=0.2606 | Time=918.20s | ETA=05:36:01
+[Triplet] Epoch 33: Train Loss=0.0687 | Val Loss=0.2587 | Time=922.01s | ETA=05:20:42
+Triplet pre-training stopped after 33 epochs.
+Loaded best triplet pre-trained weights.
+
+============================================================
+Phase 2: Prototypical Networks Training
+============================================================
+Epoch  1: Train Loss=0.3835 | Train Acc=0.8687 | Val Loss=1.0522 | Val Acc=0.5851 | Time=2.18s | ETA=01:00:41  * BEST *
+Epoch  2: Train Loss=0.3555 | Train Acc=0.8769 | Val Loss=1.0697 | Val Acc=0.5752 | Time=2.05s | ETA=01:00:38
+Epoch  3: Train Loss=0.3312 | Train Acc=0.8872 | Val Loss=1.0479 | Val Acc=0.5944 | Time=2.05s | ETA=01:00:35  * BEST *
+Epoch  4: Train Loss=0.2976 | Train Acc=0.8996 | Val Loss=1.0793 | Val Acc=0.5805 | Time=2.06s | ETA=01:00:33
+Epoch  5: Train Loss=0.2899 | Train Acc=0.9024 | Val Loss=1.0581 | Val Acc=0.5821 | Time=2.05s | ETA=01:00:31
+Epoch  6: Train Loss=0.2619 | Train Acc=0.9109 | Val Loss=1.0185 | Val Acc=0.6027 | Time=2.06s | ETA=01:00:29  * BEST *
+Epoch  7: Train Loss=0.2491 | Train Acc=0.9151 | Val Loss=1.0683 | Val Acc=0.5717 | Time=2.05s | ETA=01:00:26
+Epoch  8: Train Loss=0.2424 | Train Acc=0.9176 | Val Loss=1.1733 | Val Acc=0.5701 | Time=2.06s | ETA=01:00:24
+Epoch  9: Train Loss=0.2438 | Train Acc=0.9171 | Val Loss=1.1547 | Val Acc=0.5597 | Time=2.05s | ETA=01:00:22
+Epoch 10: Train Loss=0.2232 | Train Acc=0.9249 | Val Loss=1.0921 | Val Acc=0.5789 | Time=2.05s | ETA=01:00:20
+Epoch 11: Train Loss=0.2180 | Train Acc=0.9283 | Val Loss=1.1881 | Val Acc=0.5328 | Time=2.05s | ETA=01:00:18
+Epoch 12: Train Loss=0.2054 | Train Acc=0.9305 | Val Loss=1.0671 | Val Acc=0.5883 | Time=2.06s | ETA=01:00:16
+Epoch 13: Train Loss=0.2074 | Train Acc=0.9297 | Val Loss=1.0899 | Val Acc=0.5720 | Time=2.05s | ETA=01:00:14
+Epoch 14: Train Loss=0.2078 | Train Acc=0.9292 | Val Loss=1.1685 | Val Acc=0.5725 | Time=2.06s | ETA=01:00:12
+Epoch 15: Train Loss=0.1982 | Train Acc=0.9313 | Val Loss=1.1062 | Val Acc=0.5848 | Time=2.06s | ETA=01:00:10
+Epoch 16: Train Loss=0.1992 | Train Acc=0.9335 | Val Loss=1.1866 | Val Acc=0.5624 | Time=2.06s | ETA=01:00:08
+Epoch 17: Train Loss=0.1836 | Train Acc=0.9391 | Val Loss=1.2055 | Val Acc=0.5677 | Time=2.06s | ETA=01:00:06
+Epoch 18: Train Loss=0.1904 | Train Acc=0.9355 | Val Loss=1.1525 | Val Acc=0.5720 | Time=2.06s | ETA=01:00:04
+Epoch 19: Train Loss=0.1792 | Train Acc=0.9391 | Val Loss=1.1985 | Val Acc=0.5800 | Time=2.06s | ETA=01:00:02
+Epoch 20: Train Loss=0.1872 | Train Acc=0.9393 | Val Loss=1.1573 | Val Acc=0.5787 | Time=2.06s | ETA=01:00:00
+Best model saved to '/mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021/best_prototypical_model_512_5_5_cnn.pth'
+
+Training completed!
+Training plots saved to /mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021/prototypical_512_5_5_cnn_*.png/pdf
+
+============================================================
+Training Summary
+============================================================
+Total Epochs: 20
+Final Training Loss: 0.1872
+Final Training Accuracy: 0.9393
+Final Validation Accuracy: 0.5787
+Best Validation Accuracy: 0.6027 (Epoch 6)
+============================================================
+Best model loaded from /mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021/best_prototypical_model_512_5_5_cnn.pth
+
+============================================================
+N-way K-shot Evaluation
+============================================================
+
+Evaluating 5-way 1-shot...
+  5-way 1-shot Accuracy: 46.30% (chance: 20.0%)
+
+Evaluating 5-way 5-shot...
+  5-way 5-shot Accuracy: 55.90% (chance: 20.0%)
+
+Evaluating 9-way 1-shot...
+  9-way 1-shot Accuracy: 35.90% (chance: 11.1%)
+
+Evaluating 9-way 5-shot...
+  9-way 5-shot Accuracy: 42.60% (chance: 11.1%)
+N-way K-shot plots saved to /mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021/prototypical_512_5_5_cnn_nway_kshot.png/pdf
+
+============================================================
+Open Set Recognition Evaluation
+============================================================
+
+AUROC: 0.6435
+Known distances: 3.1417 ± 1.4397
+Unknown distances: 4.1399 ± 2.1444
+Separation: 0.9982
+
+Threshold Analysis:
+  Threshold 2.887: Known=50.0%, Unknown=68.4%, Balanced=59.2%
+  Threshold 3.791: Known=75.0%, Unknown=46.2%, Balanced=60.6%
+  Threshold 4.809: Known=90.0%, Unknown=27.2%, Balanced=58.6%
+  Threshold 5.530: Known=95.0%, Unknown=19.8%, Balanced=57.4%
+OSR plots saved to /mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021/prototypical_512_5_5_cnn_osr.png/pdf
+
+All results saved to /mimer/NOBACKUP/groups/naiss2025-5-426/icmlcn/triplet/20251129_105021/prototypical_512_5_5_cnn_results.pkl
+
+============================================================
+Final Results Summary
+============================================================
+Configuration            Accuracy    vs Chance
+--------------------------------------------
+5-way 1-shot              46.30%     +26.30%
+5-way 5-shot              55.90%     +35.90%
+9-way 1-shot              35.90%     +24.79%
+9-way 5-shot              42.60%     +31.49%
+--------------------------------------------
+OSR AUROC                  0.6435
+============================================================

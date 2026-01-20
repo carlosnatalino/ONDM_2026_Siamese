@@ -24,18 +24,15 @@ Author: Auto-generated based on OFS paper architecture
 """
 
 import sys
-import os
 import logging
 import random
 import argparse
 from pathlib import Path
-import pickle
-from collections import Counter
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report, confusion_matrix
 
 import torch
 import torch.nn as nn
@@ -197,159 +194,20 @@ class DASEventClassifier(nn.Module):
         
         self.input_dim = input_dim
         self.num_classes = num_classes
-        self.use_sigmoid = use_sigmoid
-        self.dropout_rate = dropout
-        
-        # First convolutional block
-        # Input: [batch, 1, 2048]
-        # Output: [batch, 64, 2042] (2048 - 7 + 1 = 2042)
         self.network = nn.Sequential(
-            nn.Conv1d(
-                in_channels=1,
-                out_channels=64,  # From paper/figure
-                kernel_size=7,    # From paper/figure
-                stride=1,
-                padding=0
-            ),
-        
-            # LeakyReLU activation (negative_slope=0.01 is default)
-            # From paper/figure - LeakyReLU helps with gradient flow
-            nn.LeakyReLU(negative_slope=0.01),
-        
-            # Max pooling: reduces length by factor of 4
-            # Input: [batch, 64, 2042]
-            # Output: [batch, 64, 510] (2042 / 4 = 510.5, rounded down to 510)
-            nn.MaxPool1d(kernel_size=4),
-
-            nn.Dropout(p=self.dropout_rate),
-        
-            # Second convolutional block
-            # Input: [batch, 64, 510]
-            # Output: [batch, 256, 504] (510 - 7 + 1 = 504)
-            nn.Conv1d(
-                in_channels=64,
-                out_channels=256,  # From paper/figure
-                kernel_size=7,     # From paper/figure
-                stride=1,
-                padding=0
-            ),
-        
-            # LeakyReLU activation
-            nn.LeakyReLU(negative_slope=0.01),
-        
-            # Max pooling: reduces length by factor of 4
-            # Input: [batch, 256, 504]
-            # Output: [batch, 256, 126] (504 / 4 = 126)
-            nn.MaxPool1d(kernel_size=4),
-
-            nn.Dropout(p=self.dropout_rate),
-        
-            # Flatten layer
-            # Input: [batch, 256, 126]
-            # Output: [batch, 32256] (256 * 126 = 32256)
-            nn.Flatten(),
-
-            # nn.AdaptiveAvgPool1d(256 * 126),
-        
-            # First fully connected layer
-            # Input: [batch, 32256]
-            # Output: [batch, 1024]
-            nn.Linear(
-                in_features=256 * 126,  # 32256 from paper/figure
-                out_features=1024       # From paper/figure
-            ),
-        
-            # Dropout for regularization to prevent overfitting
-            # The model has 33M parameters and is prone to overfitting
-            # Dropout randomly sets some neurons to zero during training
-            nn.Dropout(p=self.dropout_rate),
-            nn.Sigmoid(),
-            nn.Linear(
-                in_features=1024,
-                out_features=num_classes
-            ),
+            nn.Linear(input_dim, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(1024, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(512, num_classes),
+            # nn.Softmax(dim=1),
         )
-        
-        # Activation function
-        # NOTE: The paper mentions Sigmoid, but this causes vanishing gradients.
-        # Using ReLU instead for better gradient flow. If you want to match the
-        # paper exactly, set use_sigmoid=True, but expect slower convergence.
-        # The paper achieved 91% accuracy, likely with careful initialization
-        # and normalization that we're also adding.
-        # if self.use_sigmoid:
-        #     self.activation = nn.Sigmoid()
-        # else:
-        #     self.activation = nn.ReLU()
-        
-        # Initialize weights properly for better training
-        # self._initialize_weights()
-        
-        # Output layer
-        # Input: [batch, 1024]
-        # Output: [batch, num_classes]
-        # self.fc2 = nn.Linear(
-        #     in_features=1024,
-        #     out_features=num_classes
-        # )
-        
-        # Softmax is applied in the loss function (CrossEntropyLoss includes it)
-        # but we can also apply it explicitly if needed
-    
-    def _initialize_weights(self):
-        """
-        Initialize weights using He initialization for ReLU or Xavier for Sigmoid.
-        This helps with training stability and convergence.
-        """
-        for m in self.modules():
-            if isinstance(m, nn.Conv1d):
-                if self.use_sigmoid:
-                    nn.init.xavier_uniform_(m.weight)
-                else:
-                    nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                if self.use_sigmoid:
-                    nn.init.xavier_uniform_(m.weight)
-                else:
-                    nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
     
     def forward(self, x):
-        """
-        Forward pass through the network.
-        
-        Args:
-            x: Input tensor of shape [batch, input_dim]
-            
-        Returns:
-            Output tensor of shape [batch, num_classes]
-        """
-        # Reshape input from [batch, 2048] to [batch, 1, 2048] for Conv1d
-        # Conv1d expects [batch, channels, length]
-        if x.dim() == 2:
-            x = x.unsqueeze(1)  # Add channel dimension
-        
-        # # First convolutional block
-        # x = self.conv1(x)        # [batch, 64, 2042]
-        # x = self.leaky_relu1(x)   # [batch, 64, 2042]
-        # x = self.pool1(x)         # [batch, 64, 510]
-        # x = self.dropout1(x)      # [batch, 64, 510]
-        # # Second convolutional block
-        # x = self.conv2(x)         # [batch, 256, 504]
-        # x = self.leaky_relu2(x)  # [batch, 256, 504]
-        # x = self.pool2(x)         # [batch, 256, 126]
-        # x = self.dropout2(x)      # [batch, 256, 126]
-        # # Flatten
-        # x = self.flatten(x)       # [batch, 32256]
-        # x = self.global_pool(x)   # [batch, 32256]
-        # # Fully connected layers
-        # x = self.fc1(x)           # [batch, 1024]
-        # x = self.activation(x)     # [batch, 1024] - ReLU or Sigmoid
-        # x = self.dropout_fc1(x)   # [batch, 1024] - Dropout for regularization (only active during training)
-        # x = self.fc2(x)           # [batch, num_classes]
-        
         return self.network(x)
 
 
@@ -397,8 +255,7 @@ def train_epoch(model, train_loader, criterion, optimizer, device, class_weights
         
         # Statistics
         running_loss += loss.item() * data.size(0)
-        probs = torch.softmax(output, dim=1)
-        _, predicted = torch.max(probs.data, 1)
+        _, predicted = torch.max(output.data, 1)
         total += target.size(0)
         correct += (predicted == target).sum().item()
     
@@ -437,8 +294,7 @@ def evaluate(model, data_loader, criterion, device):
             loss = criterion(output, target)
             
             running_loss += loss.item() * data.size(0)
-            probs = torch.softmax(output, dim=1)
-            _, predicted = torch.max(probs.data, 1)
+            _, predicted = torch.max(output.data, 1)
             total += target.size(0)
             correct += (predicted == target).sum().item()
             
@@ -461,8 +317,7 @@ def train_model(
     device,
     class_weights=None,
     early_stopping_patience=10,
-    log_interval=50,
-    save_dir=None,
+    log_interval=50
 ):
     """
     Train the model for multiple epochs.
@@ -561,7 +416,6 @@ def train_model(
     # Load best model state
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
-        torch.save(best_model_state, f"{save_dir}/cnn_best_classifier_model.pth")
         logger.info(f"Loaded best model state (validation accuracy: {best_val_acc:.4f})")
     
     return history
@@ -641,15 +495,9 @@ def main():
         default=10,
         help='Early stopping patience (epochs without improvement, default: 10)'
     )
-    parser.add_argument(
-        '--save_dir',
-        type=str,
-        default='checkpoints',
-        help='Directory to save checkpoints (default: checkpoints)'
-    )
     
     args = parser.parse_args()
-    os.makedirs(args.save_dir, exist_ok=True)
+    
     # Set random seed
     set_seed(args.seed)
     
@@ -666,15 +514,7 @@ def main():
     # Decimation dictionary (from README.md example)
     # Reduces dataset size by sampling every Nth sample for 'regular' class
     decim_dict = {
-        # 'regular': 90,  # Decimate regular class by factor of 50
-        # 'fence': 90,
-        # 'longboard': 90,
-        # 'manipulation': 90,
-        # 'openclose': 90,
-        # 'running': 90,
-        # 'walk': 90,
-        # 'car': 90,
-        # 'construction': 90,
+        'regular': 50,  # Decimate regular class by factor of 50
     }
     
     # Initialize data loader with parameters from README.md
@@ -706,8 +546,8 @@ def main():
     
     # Get class weights from data loader (computed during encoding)
     # These weights help handle class imbalance
-    # class_weights = torch.FloatTensor(parser_loader.class_weights)
-    # logger.info(f"Class weights for handling imbalance: {class_weights.numpy()}")
+    class_weights = torch.FloatTensor(parser_loader.class_weights)
+    logger.info(f"Class weights for handling imbalance: {class_weights.numpy()}")
     
     # ========================================================================
     # Data Splitting: Train / Validation / Test
@@ -743,14 +583,6 @@ def main():
     logger.info(f"Training samples: {len(X_train)} ({100*len(X_train)/len(x):.1f}%)")
     logger.info(f"Validation samples: {len(X_val)} ({100*len(X_val)/len(x):.1f}%)")
     logger.info(f"Test samples: {len(X_test)} ({100*len(X_test)/len(x):.1f}%)")
-    
-    # get class weights from training set
-    # count the number of samples per class in the training set
-    class_counts = Counter(np.argmax(Y_train, axis=1))
-    logger.info(f"Class counts: {class_counts}")
-    # get the class weights
-    class_weights = torch.FloatTensor([x / len(X_train) for x in class_counts.values()])
-    logger.info(f"Class weights: {class_weights.numpy()}")
     
     # ========================================================================
     # Create DataLoaders
@@ -824,41 +656,8 @@ def main():
         weight_decay=args.weight_decay,
         device=device,
         class_weights=class_weights,
-        early_stopping_patience=args.early_stopping_patience,
-        save_dir=args.save_dir
+        early_stopping_patience=args.early_stopping_patience
     )
-
-    # Final evaluation on training set
-    logger.info("=" * 70)
-    logger.info("Final evaluation on training set...")
-    logger.info("=" * 70)
-    
-    criterion = nn.CrossEntropyLoss()
-    train_loss, train_acc, train_predictions, train_targets = evaluate(
-        model, train_loader, criterion, device
-    )
-    
-    logger.info(f"Final Training Loss: {train_loss:.4f}")
-    logger.info(f"Final Training Accuracy: {train_acc:.4f}")
-
-    # Classification report on training set
-    logger.info("\nTraining Set Classification Report:")
-    logger.info("\n" + classification_report(
-        train_targets,
-        train_predictions,
-        target_names=parser_loader.encoder.classes_
-    ))
-    
-    # Confusion matrix for training set
-    train_cm = confusion_matrix(train_targets, train_predictions)
-    ConfusionMatrixDisplay(train_cm, display_labels=parser_loader.encoder.classes_).plot()
-    plt.xticks(ha='right', rotation=45)
-    plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_training.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_training.pdf', bbox_inches='tight')
-    plt.close()
-    logger.info("\nTraining Set Confusion Matrix:")
-    logger.info(f"\n{train_cm}")
     
     # ========================================================================
     # Final Evaluation on Validation Set
@@ -874,27 +673,7 @@ def main():
     
     logger.info(f"Final Validation Loss: {val_loss:.4f}")
     logger.info(f"Final Validation Accuracy: {val_acc:.4f}")
-
-    # Also show validation set results for comparison
-    logger.info("\n" + "=" * 70)
-    logger.info("Validation Set Classification Report (for comparison):")
-    logger.info("=" * 70)
-    logger.info("\n" + classification_report(
-        val_targets,
-        val_predictions,
-        target_names=parser_loader.encoder.classes_
-    ))
     
-    # Confusion matrix for validation set
-    val_cm = confusion_matrix(val_targets, val_predictions)
-    ConfusionMatrixDisplay(val_cm, display_labels=parser_loader.encoder.classes_).plot()
-    plt.xticks(ha='right', rotation=45)
-    plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_validation.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_validation.pdf', bbox_inches='tight')
-    plt.close()
-    logger.info("\nValidation Set Confusion Matrix:")
-    logger.info(f"\n{val_cm}")
     # ========================================================================
     # Test Set Evaluation
     # ========================================================================
@@ -919,14 +698,18 @@ def main():
     
     # Confusion matrix for test set
     test_cm = confusion_matrix(test_targets, test_predictions)
-    ConfusionMatrixDisplay(test_cm, display_labels=parser_loader.encoder.classes_).plot()
-    plt.xticks(ha='right', rotation=45)
-    plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_test.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_test.pdf', bbox_inches='tight')
-    plt.close()
     logger.info("\nTest Set Confusion Matrix:")
     logger.info(f"\n{test_cm}")
+    
+    # Also show validation set results for comparison
+    logger.info("\n" + "=" * 70)
+    logger.info("Validation Set Classification Report (for comparison):")
+    logger.info("=" * 70)
+    logger.info("\n" + classification_report(
+        val_targets,
+        val_predictions,
+        target_names=parser_loader.encoder.classes_
+    ))
     
     # ========================================================================
     # Plot Training History
@@ -935,37 +718,38 @@ def main():
     logger.info("Plotting training history...")
     logger.info("=" * 70)
     
-    plt.figure()
-    plt.plot(history['train_loss'], 'b-', label='Training', linewidth=2, marker='o', markersize=4)
-    plt.plot(history['val_loss'], 'g-', label='Validation', linewidth=2, marker='s', markersize=4)
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.grid(True, alpha=0.3, ls=":")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_loss.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_loss.pdf', bbox_inches='tight')
-    plt.close()
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    
+    epochs = range(1, len(history['train_loss']) + 1)
+    
+    # Plot loss
+    axes[0].plot(epochs, history['train_loss'], 'b-', label='Train Loss', linewidth=2)
+    axes[0].plot(epochs, history['val_loss'], 'r-', label='Val Loss', linewidth=2)
+    axes[0].set_xlabel('Epoch', fontsize=12)
+    axes[0].set_ylabel('Loss', fontsize=12)
+    axes[0].set_title('Training and Validation Loss', fontsize=14, fontweight='bold')
+    axes[0].grid(True, alpha=0.3)
+    axes[0].legend(fontsize=11)
     
     # Plot accuracy
-    plt.figure()
-    plt.plot(history['train_acc'], 'b-', label='Training', linewidth=2, marker='o', markersize=4)
-    plt.plot(history['val_acc'], 'g-', label='Validation', linewidth=2, marker='s', markersize=4)
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.grid(True, alpha=0.3, ls=":")
-    plt.legend()
+    axes[1].plot(epochs, history['train_acc'], 'b-', label='Train Acc', linewidth=2, marker='o', markersize=4)
+    axes[1].plot(epochs, history['val_acc'], 'r-', label='Val Acc', linewidth=2, marker='s', markersize=4)
+    axes[1].set_xlabel('Epoch', fontsize=12)
+    axes[1].set_ylabel('Accuracy', fontsize=12)
+    axes[1].set_title('Training and Validation Accuracy', fontsize=14, fontweight='bold')
+    axes[1].grid(True, alpha=0.3)
+    axes[1].legend(fontsize=11)
+    axes[1].set_ylim([0, 1])
+    
     plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_acc.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_acc.pdf', bbox_inches='tight')
-    plt.close()
-    logger.info("Training history saved to 'training_history_cnn_classifier_acc.png'")
+    plt.savefig('training_history_mlp.png', dpi=150, bbox_inches='tight')
+    logger.info("Training history saved to 'training_history_mlp.png'")
     
     # Print summary
     logger.info("=" * 70)
     logger.info("Training Summary")
     logger.info("=" * 70)
-    logger.info(f"Total Epochs: {len(history['train_loss'])}")
+    logger.info(f"Total Epochs: {len(epochs)}")
     logger.info(f"Final Training Loss: {history['train_loss'][-1]:.4f}")
     logger.info(f"Final Training Accuracy: {history['train_acc'][-1]:.4f}")
     logger.info(f"Final Validation Loss: {history['val_loss'][-1]:.4f}")
@@ -976,22 +760,6 @@ def main():
     logger.info("=" * 70)
     
     logger.info("Training completed successfully!")
-
-    with open(f'{args.save_dir}/training_info.pkl', 'wb') as f:
-        pickle.dump({
-            'training_loss': history['train_loss'],
-            'training_acc': history['train_acc'],
-            'validation_loss': history['val_loss'],
-            'validation_acc': history['val_acc'],
-            'training_predictions': train_predictions,
-            'training_targets': train_targets,
-            'validation_predictions': val_predictions,
-            'validation_targets': val_targets,
-            'test_loss': test_loss,
-            'test_acc': test_acc,
-            'test_predictions': test_predictions,
-            'test_targets': test_targets,
-        }, f)
 
 
 if __name__ == '__main__':
