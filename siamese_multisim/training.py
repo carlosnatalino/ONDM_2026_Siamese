@@ -663,10 +663,22 @@ class EpisodicTrainer:
         y_train: np.ndarray,
         x_test: np.ndarray,
         y_test: np.ndarray,
-        class_names: List[str]
+        class_names: List[str],
+        regular_class_idx: Optional[int] = None
     ) -> Dict:
-        """Evaluate classification using prototype-based classification."""
-        from sklearn.metrics import classification_report, balanced_accuracy_score
+        """Evaluate classification using prototype-based classification.
+        
+        Args:
+            x_train: Training data for building prototypes
+            y_train: Training labels
+            x_test: Test data
+            y_test: Test labels
+            class_names: List of class names
+            regular_class_idx: Optional override for regular class index.
+                             If None, uses self.regular_class_idx.
+                             If provided, uses this value instead (important for multi-class evaluation).
+        """
+        from sklearn.metrics import classification_report, balanced_accuracy_score, confusion_matrix
         
         # Compute prototypes from training data
         prototypes, proto_labels = self.compute_prototypes(x_train, y_train)
@@ -674,16 +686,31 @@ class EpisodicTrainer:
         # Classify test samples
         predictions = self.classify_with_prototypes(x_test, prototypes, proto_labels)
         
+        # Ensure predictions are numpy arrays (not tensors)
+        if hasattr(predictions, 'cpu'):
+            predictions = predictions.cpu().numpy()
+        predictions = np.asarray(predictions)
+        y_test = np.asarray(y_test)
+        
         # Compute metrics
         accuracy = accuracy_score(y_test, predictions)
         balanced_acc = balanced_accuracy_score(y_test, predictions)
-        macro_f1 = f1_score(y_test, predictions, average='macro')
-        weighted_f1 = f1_score(y_test, predictions, average='weighted')
+        macro_f1 = f1_score(y_test, predictions, average='macro', zero_division=0)
+        weighted_f1 = f1_score(y_test, predictions, average='weighted', zero_division=0)
+        
+        # Confusion matrix
+        cm = confusion_matrix(y_test, predictions)
         
         # Binary anomaly detection F1 (regular vs others)
-        y_binary_true = (y_test != self.regular_class_idx).astype(int)
-        y_binary_pred = (predictions != self.regular_class_idx).astype(int)
-        anomaly_f1 = f1_score(y_binary_true, y_binary_pred, average='binary')
+        # Use provided regular_class_idx if given, otherwise use stored value
+        regular_idx = regular_class_idx if regular_class_idx is not None else self.regular_class_idx
+        
+        if regular_idx is not None:
+            y_binary_true = (y_test != regular_idx).astype(int)
+            y_binary_pred = (predictions != regular_idx).astype(int)
+            anomaly_f1 = f1_score(y_binary_true, y_binary_pred, average='binary', zero_division=0)
+        else:
+            anomaly_f1 = 0.0
         
         report = classification_report(
             y_test, predictions,
@@ -695,10 +722,12 @@ class EpisodicTrainer:
         return {
             'accuracy': accuracy,
             'balanced_accuracy': balanced_acc,
-            'macro_f1': macro_f1,
-            'weighted_f1': weighted_f1,
+            'f1_macro': macro_f1,
+            'f1_weighted': weighted_f1,
             'anomaly_f1': anomaly_f1,
+            'confusion_matrix': cm,
             'predictions': predictions,
+            'targets': y_test,
             'report': report,
             'prototypes': prototypes.cpu(),
             'prototype_labels': proto_labels

@@ -1,26 +1,20 @@
 #!/usr/bin/env python3
 """
-CNN Classifier for DAS Event Classification
+MLP Classifier for DAS Event Classification
 
-This script implements a convolutional neural network (CNN) for classifying
-Distributed Acoustic Sensing (DAS) events based on the architecture described
-in the OFS paper. The model processes frequency-domain spectra of DAS signals
+This script implements a multi-layer perceptron (MLP) for classifying
+Distributed Acoustic Sensing (DAS) events. The model is a fully-connected
+neural network that processes frequency-domain spectra of DAS signals
 to classify events into multiple categories (the dataset contains 9 classes).
 
-Architecture (from paper/figure):
+Architecture:
 - Input: DAS Channel spectrum (1x2048)
-- Conv1D: 64 filters, kernel_size=7
-- LeakyReLU activation
-- MaxPool1d: kernel_size=4
-- Conv1D: 256 filters, kernel_size=7
-- LeakyReLU activation
-- MaxPool1d: kernel_size=4
-- Flatten
-- Dense: 1024 neurons with Sigmoid activation
-- Dense: 7 neurons (output classes)
-- Softmax activation
+- Dense: 2048 → 1024 with BatchNorm, ReLU, Dropout(0.3)
+- Dense: 1024 → 512 with BatchNorm, ReLU, Dropout(0.3)
+- Dense: 512 → 9 (output classes)
+- Softmax activation (applied in loss function)
 
-Author: Auto-generated based on OFS paper architecture
+Author: Andrei Ribeiro
 """
 
 import sys
@@ -151,45 +145,35 @@ class DASClassificationDataset(Dataset):
 
 class DASEventClassifier(nn.Module):
     """
-    CNN classifier for DAS event classification.
+    MLP classifier for DAS event classification.
     
-    Architecture based on the OFS paper:
-    - Input: 1x2048 (DAS Channel spectrum)
-    - Conv1D: 64 filters, kernel_size=7, stride=1
-      Output: 64x2042 (2048 - 7 + 1 = 2042)
-    - LeakyReLU activation
-    - MaxPool1d: kernel_size=4
-      Output: 64x510 (2042 / 4 ≈ 510, accounting for rounding)
-    - Conv1D: 256 filters, kernel_size=7, stride=1
-      Output: 256x504 (510 - 7 + 1 = 504)
-    - LeakyReLU activation
-    - MaxPool1d: kernel_size=4
-      Output: 256x126 (504 / 4 = 126)
-    - Flatten
-      Output: 256 * 126 = 32256
-    - Dense: 1024 neurons with Sigmoid activation
-    - Dense: N neurons (output classes, where N is the number of classes in the dataset)
-    - Softmax activation (applied in loss function)
+    Architecture:
+    - Input: 2048 features (DAS Channel spectrum)
+    - Dense: 2048 → 1024 with BatchNorm + ReLU + Dropout(0.3)
+    - Dense: 1024 → 512 with BatchNorm + ReLU + Dropout(0.3)
+    - Dense: 512 → N classes (output layer)
+    - Softmax applied in loss function
     
-    Parameters from paper:
+    The network uses batch normalization for training stability and dropout
+    for regularization to prevent overfitting.
+    
+    Parameters:
     - Input dimension: 2048 (first 2048 elements of single-sided magnitude spectrum)
-    - Number of classes: The actual dataset contains 9 classes: car, walk, construction, 
-      regular, fence, openclose, longboard, running, manipulation
-      (Note: The figure shows 7 classes, but the actual dataset has 9 classes)
-    - Conv1D kernel size: 7 (standard choice for 1D CNNs)
-    - Pooling size: 4 (reduces dimensionality by factor of 4)
-    - Dense layer size: 1024 (provides sufficient capacity for classification)
+    - Number of classes: 9 (car, walk, construction, regular, fence, openclose, 
+      longboard, running, manipulation)
+    - Hidden layers: 1024, 512
+    - Dropout: 0.3
     """
     
     def __init__(self, input_dim: int = 2048, num_classes: int = 9, use_sigmoid: bool = False, dropout: float = 0.5):
         """
-        Initialize the CNN model.
+        Initialize the MLP model.
         
         Args:
-            input_dim: Input feature dimension (default: 2048 from paper)
-            num_classes: Number of output classes (default: 9, actual dataset has 9 classes)
-            use_sigmoid: If True, use Sigmoid activation (as in paper), else use ReLU (recommended)
-            dropout: Dropout rate for regularization (default: 0.5)
+            input_dim: Input feature dimension (default: 2048)
+            num_classes: Number of output classes (default: 9)
+            use_sigmoid: Unused parameter, kept for compatibility
+            dropout: Dropout rate for regularization (default: 0.5, but 0.3 used in network)
         """
         super(DASEventClassifier, self).__init__()
         
@@ -429,7 +413,7 @@ def train_model(
 def main():
     """Main training script."""
     parser = argparse.ArgumentParser(
-        description='Train CNN classifier for DAS event classification'
+        description='Train MLP classifier for DAS event classification'
     )
     parser.add_argument(
         '--data_dir',

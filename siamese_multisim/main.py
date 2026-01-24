@@ -430,7 +430,8 @@ def generate_report(
             t = results['test_results']
             f.write(f"  Accuracy: {t['accuracy']:.4f}\n")
             f.write(f"  Balanced Accuracy: {t['balanced_accuracy']:.4f}\n")
-            f.write(f"  Macro F1: {t['macro_f1']:.4f}\n")
+            f.write(f"  Macro F1: {t['f1_macro']:.4f}\n")
+            f.write(f"  Weighted F1: {t['f1_weighted']:.4f}\n")
             f.write(f"  Anomaly F1: {t['anomaly_f1']:.4f}\n")
             f.write("\nClassification Report:\n")
             f.write(t['report'])
@@ -654,7 +655,7 @@ def main():
     
     results = {'history': history}
     
-    # Test on training classes
+    # Test on training classes (5-class)
     logger.info("\n--- Test on Training Classes (5-class) ---")
     test_results_5class = trainer.evaluate_classification(
         x_train, y_train,
@@ -663,26 +664,81 @@ def main():
     )
     logger.info(f"5-class Test Accuracy: {test_results_5class['accuracy']:.4f}")
     logger.info(f"5-class Balanced Accuracy: {test_results_5class['balanced_accuracy']:.4f}")
-    results['test_results'] = test_results_5class
+    logger.info(f"5-class Test Samples: {len(test_results_5class['predictions'])}")
+    results['test_results_5class'] = test_results_5class
     
-    # N-way K-shot on training classes
-    logger.info("\n--- N-way K-shot on Training Classes ---")
+    # Test on ALL classes (9-class) with few-shot prototypes - for fair comparison with CNN/MLP
+    logger.info("\n--- Test on All Classes (9-class with 10-shot prototypes) ---")
+    
+    # Split test set: use K samples per class for prototypes, rest for testing
+    K_SHOT = 10
+    x_prototype_support = []
+    y_prototype_support = []
+    x_test_query = []
+    y_test_query = []
+    
+    for class_idx in np.unique(y_test_full):
+        class_mask = y_test_full == class_idx
+        class_samples = x_test_full[class_mask]
+        class_labels = y_test_full[class_mask]
+        
+        # Use first K samples for prototypes
+        x_prototype_support.append(class_samples[:K_SHOT])
+        y_prototype_support.append(class_labels[:K_SHOT])
+        
+        # Use remaining samples for testing
+        x_test_query.append(class_samples[K_SHOT:])
+        y_test_query.append(class_labels[K_SHOT:])
+    
+    x_prototype_support = np.concatenate(x_prototype_support)
+    y_prototype_support = np.concatenate(y_prototype_support)
+    x_test_query = np.concatenate(x_test_query)
+    y_test_query = np.concatenate(y_test_query)
+    
+    logger.info(f"Using {K_SHOT} samples per class for prototypes ({len(x_prototype_support)} total)")
+    logger.info(f"Testing on remaining samples ({len(x_test_query)} total)")
+    
+    # Find the correct regular class index in the 9-class space
+    regular_idx_9class = all_class_names.index('regular') if 'regular' in all_class_names else None
+    logger.info(f"Regular class index in 9-class space: {regular_idx_9class}")
+    
+    # Evaluate with few-shot prototypes from all 9 classes
+    test_results_9class = trainer.evaluate_classification(
+        x_prototype_support, y_prototype_support,  # Use K-shot samples to build prototypes
+        x_test_query, y_test_query,  # Test on remaining samples
+        all_class_names,
+        regular_class_idx=regular_idx_9class  # Pass correct index for 9-class space
+    )
+    logger.info(f"9-class Test Accuracy (10-shot): {test_results_9class['accuracy']:.4f}")
+    logger.info(f"9-class Balanced Accuracy (10-shot): {test_results_9class['balanced_accuracy']:.4f}")
+    logger.info(f"9-class F1 Macro (10-shot): {test_results_9class['f1_macro']:.4f}")
+    logger.info(f"9-class F1 Weighted (10-shot): {test_results_9class['f1_weighted']:.4f}")
+    logger.info(f"9-class Anomaly Detection F1 (10-shot): {test_results_9class['anomaly_f1']:.4f}")
+    logger.info(f"9-class Test Samples: {len(test_results_9class['predictions'])}")
+    results['test_results_9class'] = test_results_9class
+    results['test_results'] = test_results_9class  # Use 9-class for main comparison
+    
+    # N-way K-shot on validation set (avoid test contamination)
+    logger.info("\n--- N-way K-shot on Validation Set ---")
     nway_5class = run_comprehensive_nway_kshot_eval(
         model=model,
-        x=x_test_train,
-        y=y_test_train,
+        x=x_val,
+        y=y_val,
         device=device,
         n_ways=[5],
         k_shots=[1, 5, 10],
         n_episodes=100
     )
     
-    # N-way K-shot on all classes
+    # N-way K-shot on all classes (using validation subset from full data)
     logger.info("\n--- N-way K-shot on All Classes (9-class) ---")
+    _, x_val_full, _, _, y_val_full, _ = create_balanced_splits(
+        x_full, y_full, seed=args.seed
+    )
     nway_9class = run_comprehensive_nway_kshot_eval(
         model=model,
-        x=x_test_full,
-        y=y_test_full,
+        x=x_val_full,
+        y=y_val_full,
         device=device,
         n_ways=[5, 9],
         k_shots=[1, 5, 10],
@@ -770,17 +826,31 @@ def main():
     # Save results in format compatible with visualization notebook
     np.save(os.path.join(output_dir, 'history.npy'), history)
     
+    # Save 9-class results (for comparison with CNN/MLP)
     test_results_for_notebook = {
+        'accuracy': test_results_9class['accuracy'],
+        'balanced_accuracy': test_results_9class['balanced_accuracy'],
+        'f1_macro': test_results_9class['f1_macro'],
+        'f1_weighted': test_results_9class['f1_weighted'],
+        'confusion_matrix': test_results_9class['confusion_matrix'],
+        'class_names': list(all_class_names),
+        'predictions': test_results_9class['predictions'],
+        'targets': test_results_9class['targets']
+    }
+    np.save(os.path.join(output_dir, 'test_results.npy'), test_results_for_notebook)
+    
+    # Also save 5-class results separately
+    test_results_5class_for_notebook = {
         'accuracy': test_results_5class['accuracy'],
         'balanced_accuracy': test_results_5class['balanced_accuracy'],
         'f1_macro': test_results_5class['f1_macro'],
         'f1_weighted': test_results_5class['f1_weighted'],
         'confusion_matrix': test_results_5class['confusion_matrix'],
-        'class_names': train_class_names,
+        'class_names': list(train_class_names),
         'predictions': test_results_5class['predictions'],
-        'targets': y_test_train
+        'targets': test_results_5class['targets']
     }
-    np.save(os.path.join(output_dir, 'test_results.npy'), test_results_for_notebook)
+    np.save(os.path.join(output_dir, 'test_results_5class.npy'), test_results_5class_for_notebook)
     
     logger.info(f"✓ Saved training history to {output_dir}/history.npy")
     logger.info(f"✓ Saved test results to {output_dir}/test_results.npy")
@@ -796,6 +866,8 @@ def main():
     logger.info(f"Best Val Accuracy: {trainer.best_val_acc:.4f}")
     logger.info(f"Test Accuracy (5-class): {test_results_5class['accuracy']:.4f}")
     logger.info(f"Test Balanced Accuracy (5-class): {test_results_5class['balanced_accuracy']:.4f}")
+    logger.info(f"Test Accuracy (9-class): {test_results_9class['accuracy']:.4f}")
+    logger.info(f"Test Balanced Accuracy (9-class): {test_results_9class['balanced_accuracy']:.4f}")
     
     logger.info("\nN-way K-shot Results:")
     for config, res in results['nway_results'].items():
