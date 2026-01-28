@@ -183,11 +183,11 @@ class DASEventClassifier(nn.Module):
             nn.Linear(input_dim, 1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(dropout),
             nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(dropout),
             nn.Linear(512, num_classes),
             # nn.Softmax(dim=1),
         )
@@ -496,11 +496,9 @@ def main():
     logger.info("Loading and preprocessing dataset...")
     logger.info("=" * 70)
     
-    # Decimation dictionary (from README.md example)
-    # Reduces dataset size by sampling every Nth sample for 'regular' class
-    decim_dict = {
-        'regular': 50,  # Decimate regular class by factor of 50
-    }
+    # NO decimation - same as original CNN training
+    # This allows fair comparison on the same test set
+    decim_dict = {}  # No decimation
     
     # Initialize data loader with parameters from README.md
     # Parameters from paper/README:
