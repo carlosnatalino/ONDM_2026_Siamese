@@ -2,8 +2,7 @@
 venv/
 .venv/
 __pycache__/
-*.pyc
-*.pyo
+*.py[codz]
 *.pyd
 *.egg-info/
 *.egg
@@ -53,3 +52,16 @@ Thumbs.db
 *.h5
 *.hdf5
 data/
+
+# Environments
+.env
+.envrc
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Misc
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
