@@ -665,16 +665,11 @@ def main():
     
     # Decimation dictionary (from README.md example)
     # Reduces dataset size by sampling every Nth sample for 'regular' class
+    # Decimation dictionary: Only decimate 'regular' class to balance dataset
+    # Regular class has ~21K samples vs ~360-2917 for others
+    # Decimating by 15× brings regular to ~1400 samples (average of other classes)
     decim_dict = {
-        # 'regular': 90,  # Decimate regular class by factor of 50
-        # 'fence': 90,
-        # 'longboard': 90,
-        # 'manipulation': 90,
-        # 'openclose': 90,
-        # 'running': 90,
-        # 'walk': 90,
-        # 'car': 90,
-        # 'construction': 90,
+        'regular': 15,  # Decimate regular class by factor of 15
     }
     
     # Initialize data loader with parameters from README.md

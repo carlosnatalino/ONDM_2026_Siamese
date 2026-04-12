@@ -11,16 +11,29 @@ __pycache__/
 build/
 dist/
 
-# Training outputs
+# Training outputs / results (keep locally, do not publish)
 siamese_multisim_*/
 ffnn_results_*/
 cnn_results_*/
+mlp_results_*/
+siamese_no_decimation_results/
+cnn_balanced_results/
+checkpoints/
+improvements_tests/
 *.log
 *.pth
 *.pt
 *.pkl
-training_history.png
+*.npy
+training_history*.png
 confusion_matrix.png
+EVALUATION_STATUS.md
+
+# Generated figures (keep locally, do not publish)
+paper_figures/
+
+# Reference PDFs (copyrighted)
+references/*.pdf
 
 # Jupyter
 .ipynb_checkpoints/

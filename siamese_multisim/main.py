@@ -709,6 +709,9 @@ def main():
         all_class_names,
         regular_class_idx=regular_idx_9class  # Pass correct index for 9-class space
     )
+    
+    # Add class_names to the results dictionary for visualization
+    test_results_9class['class_names'] = list(all_class_names)
     logger.info(f"9-class Test Accuracy (10-shot): {test_results_9class['accuracy']:.4f}")
     logger.info(f"9-class Balanced Accuracy (10-shot): {test_results_9class['balanced_accuracy']:.4f}")
     logger.info(f"9-class F1 Macro (10-shot): {test_results_9class['f1_macro']:.4f}")
@@ -720,13 +723,14 @@ def main():
     
     # N-way K-shot on validation set (avoid test contamination)
     logger.info("\n--- N-way K-shot on Validation Set ---")
+    k_shots_eval = [1, 5, 10, 15, 20]
     nway_5class = run_comprehensive_nway_kshot_eval(
         model=model,
         x=x_val,
         y=y_val,
         device=device,
         n_ways=[5],
-        k_shots=[1, 5, 10],
+        k_shots=k_shots_eval,
         n_episodes=100
     )
     
@@ -741,11 +745,50 @@ def main():
         y=y_val_full,
         device=device,
         n_ways=[5, 9],
-        k_shots=[1, 5, 10],
+        k_shots=k_shots_eval,
         n_episodes=100
     )
     
     results['nway_results'] = {**nway_5class, **nway_9class}
+
+    # Generate K-shot test results for confusion matrices (9-class)
+    logger.info("\n--- Computing K-shot Test Results for Confusion Matrices ---")
+    kshot_results = {}
+    for k in k_shots_eval:
+        if k >= len(x_test_full) // len(np.unique(y_test_full)):
+            logger.warning(f"Skipping {k}-shot: not enough samples per class")
+            continue
+        
+        logger.info(f"  Computing {k}-shot classification...")
+        x_proto, y_proto, x_query, y_query = [], [], [], []
+        for class_idx in np.unique(y_test_full):
+            mask = y_test_full == class_idx
+            samples = x_test_full[mask]
+            labels = y_test_full[mask]
+            x_proto.append(samples[:k])
+            y_proto.append(labels[:k])
+            x_query.append(samples[k:])
+            y_query.append(labels[k:])
+        
+        x_proto = np.concatenate(x_proto)
+        y_proto = np.concatenate(y_proto)
+        x_query = np.concatenate(x_query)
+        y_query = np.concatenate(y_query)
+        
+        # Compute prototypes and classify
+        prototypes, proto_labels = trainer.compute_prototypes(x_proto, y_proto)
+        preds = trainer.classify_with_prototypes(x_query, prototypes, proto_labels)
+        acc = np.mean(preds == y_query)
+        
+        kshot_results[k] = {
+            'targets': y_query,
+            'predictions': preds,
+            'class_names': list(all_class_names),
+            'accuracy': acc
+        }
+        logger.info(f"    {k}-shot accuracy: {acc:.4f}")
+    
+    results['kshot_confusion_results'] = kshot_results
     
     # Novelty detection
     logger.info("\n--- Novelty Detection Evaluation ---")
@@ -810,7 +853,9 @@ def main():
         device=device,
         nway_results=results.get('nway_results', {}),
         simulation_results=simulation_results,
-        output_dir=output_dir
+        output_dir=output_dir,
+        test_results_9class=test_results_9class,
+        kshot_results=results.get('kshot_confusion_results', None)
     )
     
     # Generate report

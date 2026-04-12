@@ -1,8 +1,0 @@
-numpy
-pandas
-requests
-scikit-learn
-h5py
-ipykernel
-matplotlib
-torch

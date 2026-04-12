@@ -36,7 +36,7 @@ from models import MultiSimilaritySiameseNetwork
 # Dataset configuration
 ALL_CLASSES = ['car', 'construction', 'fence', 'longboard', 'manipulation', 
                'openclose', 'regular', 'running', 'walk']
-TRAIN_CLASSES = ['fence', 'manipulation', 'openclose', 'regular', 'walk']
+TRAIN_CLASSES = ['regular', 'walk', 'car', 'manipulation', 'openclose']
 
 logging.basicConfig(
     level=logging.INFO,
