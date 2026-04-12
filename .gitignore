@@ -65,23 +65,3 @@ venv.bak/
 .ruff_cache/
 .mypy_cache/
 .pytest_cache/
-
-# Root-level files not for publication
-references/
-*.sh
-pyproject.toml
-uv.lock
-siamese_multisim/
-dataset.ipynb
-evaluate_siamese.py
-retrain_siamese_with_multisim_test.py
-compare_approaches.py
-das_foundation_model.py
-siamese.py
-siamese_triplet.py
-test_mlp_balanced.py
-train_cnn.py
-train_cnn_classifier.py
-train_mlp.py
-train_mlp_classifier.py
-train_siamese.py
