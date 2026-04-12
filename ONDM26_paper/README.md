@@ -1,9 +1,10 @@
-# Few-Shot DAS Event Classification with Multi-Similarity Siamese Networks
+# Paper Codes Repository
 
 This repository contains the code for the paper:
 
 > **"Towards Generalizable ML-Based Event Recognition Using Φ-OTDR and Siamese Networks"**  
 > Published at ONDM 2026
+> Authors: Andrei Ribeiro, Fabrício Rossy, João CWA Costa, Paolo Monti, and Carlos Natalino.
 
 We compare three approaches for classifying events in Distributed Acoustic Sensing (DAS) signals across 9 classes: a CNN classifier, an MLP classifier, and a proposed Multi-Similarity Siamese Network (MS-SNN) evaluated under few-shot (N-way K-shot) settings.
 
