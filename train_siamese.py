@@ -39,12 +39,14 @@ import argparse
 import logging
 import datetime
 import pickle
+from pathlib import Path
 import random
 from collections import Counter
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from siamese_multisim.models import create_siamese_network, MultiSimilaritySiameseNetwork
 from siamese_multisim.training import (
     SignalAugmentation, EpisodicPairSampler, SiamesePairDataset,
@@ -131,7 +133,7 @@ def load_dataset(
     logger.info(f"Loading dataset from {data_dir}")
     
     loader = DASDataLoader(
-        data_dir=data_dir,
+        data_dir=os.path.join(data_dir, "data"),
         sample_len=2048,
         transform=fft,
         fsize=8192,
@@ -481,10 +483,8 @@ def main():
     
     # Paths
     parser.add_argument('--data_dir', type=str,
-                       default='/nobackup/carda/datasets/DAS-dataset/data',
+                       required=True,
                        help='Path to dataset')
-    parser.add_argument('--output_dir', type=str, default='siamese_multisim',
-                       help='Output directory prefix')
     
     # Model
     parser.add_argument('--embedding_dim', type=int, default=128,
@@ -521,18 +521,19 @@ def main():
                        help='Random seed')
     
     args = parser.parse_args()
+
+    # Add the provided data_dir/python to the Python path to enable module discovery
+    sys.path.insert(0, os.path.join(args.data_dir, "python"))
+    
+    from data_loader import DASDataLoader, fft
+    global DASDataLoader, fft
     
     # Set seed
     set_seed(args.seed)
     
     # Create timestamped output directory
-    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    if args.debug:
-        output_dir = f"{args.output_dir}_debug"
-    else:
-        output_dir = f"{args.output_dir}_{timestamp}"
-    
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = "results_siamese_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    Path(output_dir).mkdir(exist_ok=True, parents=True)
     
     # Setup file logging
     file_handler = logging.FileHandler(os.path.join(output_dir, 'training.log'))

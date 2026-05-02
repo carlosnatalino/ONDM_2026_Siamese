@@ -19,6 +19,7 @@ Author: Andrei Ribeiro
 """
 
 import sys
+import os
 import logging
 import random
 import argparse
@@ -34,9 +35,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-
-# Import data loader
-from data_loader import DASDataLoader, fft
 
 # Configure logging
 logging.basicConfig(
@@ -419,7 +417,7 @@ def main():
     parser.add_argument(
         '--data_dir',
         type=str,
-        default='/nobackup/carda/datasets/DAS-dataset/data',
+        required=True,
         help='Path to dataset directory'
     )
     parser.add_argument(
@@ -484,6 +482,11 @@ def main():
     
     args = parser.parse_args()
     
+    # Add the provided data_dir/python to the Python path to enable module discovery
+    sys.path.insert(0, os.path.join(args.data_dir, "python"))
+    
+    from data_loader import DASDataLoader, fft
+    
     # Set random seed
     set_seed(args.seed)
     
@@ -508,7 +511,7 @@ def main():
     # - fsize: 8192 (window size for sliding window)
     # - shift: 2048 (overlap of 75% with fsize=8192)
     parser_loader = DASDataLoader(
-        data_dir=args.data_dir,
+        data_dir=os.path.join(args.data_dir, "data"),
         sample_len=2048,      # From paper: first 2048 elements of spectrum
         transform=fft,         # FFT transformation (from README.md)
         fsize=8192,           # Window size (from README.md)
@@ -726,7 +729,7 @@ def main():
     axes[1].set_ylim([0, 1])
     
     plt.tight_layout()
-    plt.savefig('training_history_mlp.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/training_history_mlp.png', dpi=150, bbox_inches='tight')
     logger.info("Training history saved to 'training_history_mlp.png'")
     
     # Print summary
@@ -746,7 +749,7 @@ def main():
     logger.info("Training completed successfully!")
     
     # Save results for visualization notebook
-    output_dir = "mlp_results_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = "results_mlp_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     Path(output_dir).mkdir(exist_ok=True, parents=True)
     
     # Calculate metrics

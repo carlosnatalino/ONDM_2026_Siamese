@@ -6,3 +6,4 @@ h5py
 ipykernel
 matplotlib
 torch
+seaborn

@@ -15,6 +15,8 @@ Date: January 2026
 """
 
 import argparse
+import os
+import sys
 import logging
 from pathlib import Path
 from typing import Dict, Tuple
@@ -28,7 +30,6 @@ from sklearn.metrics import (
     precision_score, recall_score, classification_report, confusion_matrix
 )
 
-from data_loader import DASDataLoader, fft
 from siamese_multisim.models import MultiSimilaritySiameseNetwork
 
 # Dataset configuration
@@ -330,7 +331,7 @@ def evaluate_full_test(
     return results
 
 
-def load_dataset(data_dir: str = '/mnt/hdd/andrei/DAS-Dataset/Dataset3-2018-all') -> Tuple[np.ndarray, np.ndarray, list]:
+def load_dataset(data_dir: str) -> Tuple[np.ndarray, np.ndarray, list]:
     """Load DAS dataset."""
     logger.info(f"Loading dataset from {data_dir}")
     
@@ -340,7 +341,7 @@ def load_dataset(data_dir: str = '/mnt/hdd/andrei/DAS-Dataset/Dataset3-2018-all'
     decim_dict = {}
     
     loader = DASDataLoader(
-        data_dir=data_dir,
+        data_dir=os.path.join(data_dir, "data"),
         sample_len=2048,
         transform=fft,
         fsize=8192,
@@ -516,14 +517,19 @@ def main():
     parser.add_argument('--checkpoint', type=str, required=True,
                         help='Path to model checkpoint (relative to project root)')
     parser.add_argument('--data_dir', type=str, 
-                        default='/nobackup/carda/datasets/DAS-dataset/data',
+                        required=True,
                         help='Path to dataset directory')
-    parser.add_argument('--output_dir', type=str, default='../paper_figures',
+    parser.add_argument('--output_dir', type=str, required=True,
                         help='Output directory for results (relative to this script)')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed')
     
     args = parser.parse_args()
+
+    # Add the provided data_dir/python to the Python path to enable module discovery
+    sys.path.insert(0, os.path.join(args.data_dir, "python"))
+    from data_loader import DASDataLoader, fft
+    global DASDataLoader, fft
     
     # Set seed
     np.random.seed(args.seed)

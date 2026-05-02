@@ -11,22 +11,7 @@ build/
 dist/
 
 # Training outputs / results (keep locally, do not publish)
-siamese_multisim_*/
-ffnn_results_*/
-cnn_results_*/
-mlp_results_*/
-siamese_no_decimation_results/
-cnn_balanced_results/
-checkpoints/
-improvements_tests/
-*.log
-*.pth
-*.pt
-*.pkl
-*.npy
-training_history*.png
-confusion_matrix.png
-EVALUATION_STATUS.md
+results_*
 
 # Generated figures (keep locally, do not publish)
 paper_figures/

@@ -24,6 +24,7 @@ Architecture (from paper/figure):
 Author: Auto-generated based on OFS paper architecture
 """
 
+import datetime
 import sys
 import os
 import logging
@@ -42,9 +43,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-
-# Import data loader
-from data_loader import DASDataLoader, fft
 
 # Configure logging
 logging.basicConfig(
@@ -463,7 +461,7 @@ def train_model(
     class_weights=None,
     early_stopping_patience=10,
     log_interval=50,
-    save_dir=None,
+    output_dir=None,
 ):
     """
     Train the model for multiple epochs.
@@ -562,7 +560,7 @@ def train_model(
     # Load best model state
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
-        torch.save(best_model_state, f"{save_dir}/cnn_best_classifier_model.pth")
+        torch.save(best_model_state, f"{output_dir}/cnn_best_classifier_model.pth")
         logger.info(f"Loaded best model state (validation accuracy: {best_val_acc:.4f})")
     
     return history
@@ -580,7 +578,7 @@ def main():
     parser.add_argument(
         '--data_dir',
         type=str,
-        default='/nobackup/carda/datasets/DAS-dataset/data',
+        required=True,
         help='Path to dataset directory'
     )
     parser.add_argument(
@@ -642,15 +640,15 @@ def main():
         default=10,
         help='Early stopping patience (epochs without improvement, default: 10)'
     )
-    parser.add_argument(
-        '--save_dir',
-        type=str,
-        default='checkpoints',
-        help='Directory to save checkpoints (default: checkpoints)'
-    )
     
     args = parser.parse_args()
-    os.makedirs(args.save_dir, exist_ok=True)
+
+    # Add the provided data_dir/python to the Python path to enable module discovery
+    sys.path.insert(0, os.path.join(args.data_dir, "python"))
+    from data_loader import DASDataLoader, fft
+
+    output_dir = "results_cnn_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    Path(output_dir).mkdir(exist_ok=True, parents=True)
     # Set random seed
     set_seed(args.seed)
     
@@ -680,7 +678,7 @@ def main():
     # - fsize: 8192 (window size for sliding window)
     # - shift: 2048 (overlap of 75% with fsize=8192)
     parser_loader = DASDataLoader(
-        data_dir=args.data_dir,
+        data_dir=os.path.join(args.data_dir, "data"),
         sample_len=2048,      # From paper: first 2048 elements of spectrum
         transform=fft,         # FFT transformation (from README.md)
         fsize=8192,           # Window size (from README.md)
@@ -821,7 +819,7 @@ def main():
         device=device,
         class_weights=class_weights,
         early_stopping_patience=args.early_stopping_patience,
-        save_dir=args.save_dir
+        output_dir=output_dir
     )
 
     # Final evaluation on training set
@@ -850,8 +848,8 @@ def main():
     ConfusionMatrixDisplay(train_cm, display_labels=parser_loader.encoder.classes_).plot()
     plt.xticks(ha='right', rotation=45)
     plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_training.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_training.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/cnn_confusion_matrix_training.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/cnn_confusion_matrix_training.pdf', bbox_inches='tight')
     plt.close()
     logger.info("\nTraining Set Confusion Matrix:")
     logger.info(f"\n{train_cm}")
@@ -886,8 +884,8 @@ def main():
     ConfusionMatrixDisplay(val_cm, display_labels=parser_loader.encoder.classes_).plot()
     plt.xticks(ha='right', rotation=45)
     plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_validation.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_validation.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/cnn_confusion_matrix_validation.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/cnn_confusion_matrix_validation.pdf', bbox_inches='tight')
     plt.close()
     logger.info("\nValidation Set Confusion Matrix:")
     logger.info(f"\n{val_cm}")
@@ -918,8 +916,8 @@ def main():
     ConfusionMatrixDisplay(test_cm, display_labels=parser_loader.encoder.classes_).plot()
     plt.xticks(ha='right', rotation=45)
     plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_test.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/cnn_confusion_matrix_test.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/cnn_confusion_matrix_test.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/cnn_confusion_matrix_test.pdf', bbox_inches='tight')
     plt.close()
     logger.info("\nTest Set Confusion Matrix:")
     logger.info(f"\n{test_cm}")
@@ -939,8 +937,8 @@ def main():
     plt.grid(True, alpha=0.3, ls=":")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_loss.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_loss.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/training_history_cnn_classifier_loss.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/training_history_cnn_classifier_loss.pdf', bbox_inches='tight')
     plt.close()
     
     # Plot accuracy
@@ -952,8 +950,8 @@ def main():
     plt.grid(True, alpha=0.3, ls=":")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_acc.png', dpi=150, bbox_inches='tight')
-    plt.savefig(f'{args.save_dir}/training_history_cnn_classifier_acc.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/training_history_cnn_classifier_acc.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/training_history_cnn_classifier_acc.pdf', bbox_inches='tight')
     plt.close()
     logger.info("Training history saved to 'training_history_cnn_classifier_acc.png'")
     
@@ -982,8 +980,8 @@ def main():
     test_f1_weighted = f1_score(test_targets, test_predictions, average='weighted')
     
     # Save history for notebook (training curves)
-    np.save(f'{args.save_dir}/history.npy', history)
-    logger.info(f"✓ Saved training history to {args.save_dir}/history.npy")
+    np.save(f'{output_dir}/history.npy', history)
+    logger.info(f"✓ Saved training history to {output_dir}/history.npy")
     
     # Save test results for notebook (metrics + confusion matrix)
     test_results = {
@@ -996,11 +994,11 @@ def main():
         'predictions': np.array(test_predictions),
         'targets': np.array(test_targets)
     }
-    np.save(f'{args.save_dir}/test_results.npy', test_results)
-    logger.info(f"✓ Saved test results to {args.save_dir}/test_results.npy")
+    np.save(f'{output_dir}/test_results.npy', test_results)
+    logger.info(f"✓ Saved test results to {output_dir}/test_results.npy")
 
     # Also save as pickle for compatibility
-    with open(f'{args.save_dir}/training_info.pkl', 'wb') as f:
+    with open(f'{output_dir}/training_info.pkl', 'wb') as f:
         pickle.dump({
             'training_loss': history['train_loss'],
             'training_acc': history['train_acc'],
