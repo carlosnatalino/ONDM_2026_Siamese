@@ -35,7 +35,13 @@ We compare three approaches for classifying events in Distributed Acoustic Sensi
 ## Dataset
 
 The dataset used is the **DAS event classification dataset** available at:  
-https://doi.org/10.6084/m9.figshare.28452497
+https://doi.org/10.6084/m9.figshare.27004732
+
+The dataset has been described in this publication:
+
+```
+Tomasov, A., Zaviska, P., Dejdar, P. et al. Comprehensive Dataset for Event Classification Using Distributed Acoustic Sensing (DAS) Systems. Sci Data 12, 793 (2025). https://doi.org/10.1038/s41597-025-05088-4
+```
 
 It contains 9 event classes recorded with an OptaSense ODH interrogator:
 `car`, `construction`, `fence`, `longboard`, `manipulation`, `openclose`, `regular`, `running`, `walk`
