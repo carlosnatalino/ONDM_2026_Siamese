@@ -32,10 +32,7 @@ from sklearn.metrics import (
 
 from siamese_multisim.models import MultiSimilaritySiameseNetwork
 
-# Dataset configuration
-ALL_CLASSES = ['car', 'construction', 'fence', 'longboard', 'manipulation', 
-               'openclose', 'regular', 'running', 'walk']
-TRAIN_CLASSES = ['regular', 'walk', 'car', 'manipulation', 'openclose']
+from train_siamese import ALL_CLASSES, TRAIN_CLASSES
 
 logging.basicConfig(
     level=logging.INFO,

@@ -19,12 +19,19 @@ This repository contains the code for the paper:
 
 We compare three approaches for classifying events in Distributed Acoustic Sensing (DAS) signals across 9 classes: a CNN classifier, an MLP classifier, and a proposed Multi-Similarity Siamese Network (MS-SNN) evaluated under few-shot (N-way K-shot) settings.
 
+## Abstract
+
+Machine learning models for event recognition (detection and classification) in optical fiber sensing often fail to generalize across deployments and require extensive retraining for new event types. This limitation poses challenges for practical deployment, particularly when novel event types emerge and system configurations change frequently. We propose an attention-weighted multi-similarity Siamese neural network (MS-SNN) for few-shot event recognition in distributed acoustic sensing applications. By combining five complementary similarity metrics with class-balanced episodic training, our approach learns generalizable embeddings from limited labeled data. The architecture enables both classification of known event types and detection of novel event types without model retraining. The method was trained on 5 out of the 9 classes available in the dataset. Then, evaluated on the entire 9-class dataset, our method achieves 97% accuracy for binary event detection with 98% recall using only 5-10 support samples per class. Our results also indicate that standard accuracy metrics mask performance disparities on imbalanced data, and that balanced accuracy provides a clearer understanding of model performance. We release an open-source implementation to facilitate reproducibility and accelerate research in generalizable optical network sensing.
+
+## License
+
+This code is released under the [GNU General Public License v3.0](LICENSE). See the `LICENSE` file for the full terms.
+
 ## Repository Structure
 
 ```
 ├── README.md
-├── requirements.in / requirements.txt
-├── data_loader.py                        # DAS HDF5 dataset loader
+├── requirements.in / requirements.txt    # Packages needed
 ├── train_cnn.py                          # Train the CNN baseline
 ├── train_mlp.py                          # Train the MLP baseline
 ├── train_siamese.py                      # Train the MS-SNN
@@ -79,11 +86,10 @@ python train_cnn.py \
     --batch_size 64 \
     --lr 1e-4 \
     --dropout 0.5 \
-    --seed 42 \
-    --save_dir cnn_results
+    --seed 42
 ```
 
-Outputs saved to `cnn_results`:
+Outputs saved to `results_cnn_<timestamp>/`:
 - `history.npy` — training curves
 - `test_results.npy` — accuracy, balanced accuracy, F1, confusion matrix
 - figures and weights
@@ -100,7 +106,7 @@ python train_mlp.py \
     --seed 42
 ```
 
-Outputs saved to `mlp_results/`:
+Outputs saved to `results_mlp_<timestamp>/`:
 - `history.npy` — training curves
 - `test_results.npy` — accuracy, balanced accuracy, F1, confusion matrix
 - figures and weights
@@ -120,7 +126,7 @@ python train_siamese.py \
     --seed 42
 ```
 
-Outputs saved to `siamese_multisim/`:
+Outputs saved to `results_siamese_<timestamp>/`:
 - `best_model.pth` — best model checkpoint
 - `history.npy` — training curves
 - figures and weights
@@ -131,7 +137,7 @@ This script classifies all test samples using prototype-based few-shot evaluatio
 
 ```bash
 python evaluate_siamese.py \
-    --checkpoint siamese_multisim_<timestamp>/best_model.pth \
+    --checkpoint results_siamese_<timestamp>/best_model.pth \
     --data_dir /path/to/DAS-dataset/data \
     --output_dir results_siamese_no_decimation_results \
     --seed 42
