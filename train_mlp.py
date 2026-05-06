@@ -16,6 +16,7 @@ Architecture:
 - Softmax activation (applied in loss function)
 
 Author: Andrei Ribeiro
+Date: January 2026
 """
 
 import sys

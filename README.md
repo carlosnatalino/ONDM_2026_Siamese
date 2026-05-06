@@ -23,10 +23,6 @@ We compare three approaches for classifying events in Distributed Acoustic Sensi
 
 Machine learning models for event recognition (detection and classification) in optical fiber sensing often fail to generalize across deployments and require extensive retraining for new event types. This limitation poses challenges for practical deployment, particularly when novel event types emerge and system configurations change frequently. We propose an attention-weighted multi-similarity Siamese neural network (MS-SNN) for few-shot event recognition in distributed acoustic sensing applications. By combining five complementary similarity metrics with class-balanced episodic training, our approach learns generalizable embeddings from limited labeled data. The architecture enables both classification of known event types and detection of novel event types without model retraining. The method was trained on 5 out of the 9 classes available in the dataset. Then, evaluated on the entire 9-class dataset, our method achieves 97% accuracy for binary event detection with 98% recall using only 5-10 support samples per class. Our results also indicate that standard accuracy metrics mask performance disparities on imbalanced data, and that balanced accuracy provides a clearer understanding of model performance. We release an open-source implementation to facilitate reproducibility and accelerate research in generalizable optical network sensing.
 
-## License
-
-This code is released under the [GNU General Public License v3.0](LICENSE). See the `LICENSE` file for the full terms.
-
 ## Repository Structure
 
 ```
@@ -171,6 +167,10 @@ Three-layer MLP:
 
 ### MS-SNN (Multi-Similarity Siamese Network)
 Siamese network with a shared 1D-CNN embedding backbone and a multi-similarity comparison head combining L1, L2, cosine, and element-wise product distances with learned attention weights. Evaluated in a prototypical few-shot framework (9-way, K-shot).
+
+## License
+
+This code is released under the [GNU General Public License v3.0](LICENSE). See the `LICENSE` file for the full terms.
 
 ## References
 

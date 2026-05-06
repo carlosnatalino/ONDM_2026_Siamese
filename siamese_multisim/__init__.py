@@ -23,8 +23,8 @@ References:
 - Bromley et al., "Signature Verification using a Siamese Time Delay NN" (1993)
 - Koch et al., "Siamese Neural Networks for One-shot Image Recognition" (2015)
 - Snell et al., "Prototypical Networks for Few-shot Learning" (2017)
-- Wang et al., "Multi-Similarity Loss with General Pair Weighting" (2019)
-- Tomasov et al., "Enhancing Perimeter Protection using Φ-OTDR and CNN" (2023)
+- Wang et al., "Multi-similarity loss with general pair weighting for deep metric learning" (2019)
+- Tomasov et al., "Enhancing Perimeter Protection using Φ-OTDR and CNN for event classification" (2023)
 
 Author: Andrei Ribeiro, Carlos Natalino
 Date: January 2026

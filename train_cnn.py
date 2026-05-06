@@ -5,8 +5,10 @@ CNN Classifier for DAS Event Classification
 
 This script implements a convolutional neural network (CNN) for classifying
 Distributed Acoustic Sensing (DAS) events based on the architecture described
-in the OFS paper. The model processes frequency-domain spectra of DAS signals
-to classify events into multiple categories (the dataset contains 9 classes).
+in the Tomasov et al., "Enhancing Perimeter Protection using Φ-OTDR and CNN 
+for event classification" (OFS) paper. The model processes frequency-domain 
+spectra of DAS signals to classify events into multiple categories (the
+dataset contains 9 classes).
 
 Architecture (from paper/figure):
 - Input: DAS Channel spectrum (1x2048)
@@ -21,7 +23,7 @@ Architecture (from paper/figure):
 - Dense: 7 neurons (output classes)
 - Softmax activation
 
-Author: Auto-generated based on OFS paper architecture
+Author: Auto-generated based on the OFS paper architecture
 """
 
 import datetime
