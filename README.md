@@ -5,7 +5,7 @@ This repository contains the code for the paper:
 > **"Towards Generalizable ML-Based Event Recognition Using Φ-OTDR and Siamese Networks"**  
 > Published at ONDM 2026
 > 
-> Authors: Andrei Ribeiro, Fabrício Rossy, João C. W. A. Costa, Paolo Monti, and Carlos Natalino
+> Authors: Andrei Ribeiro, Fabrício R. L. Lobato, João C. W. A. Costa, Paolo Monti, and Carlos Natalino
 
 ```bibtex
 @inproceedings{Ribeiro_2026_GeneralizableMLBasedEvent,
@@ -16,6 +16,8 @@ This repository contains the code for the paper:
   month = may,
 }
 ```
+
+Authors' version: https://research.chalmers.se/en/publication/552081
 
 We compare three approaches for classifying events in Distributed Acoustic Sensing (DAS) signals across 9 classes: a CNN classifier, an MLP classifier, and a proposed Multi-Similarity Siamese Network (MS-SNN) evaluated under few-shot (N-way K-shot) settings.
 
@@ -73,7 +75,7 @@ The `requirements.txt` file contains the specific versions used to generate the 
 
 ## Reproducing Results
 
-Follow steps 1–4 in order. All scripts accept `--data_dir` pointing to the dataset root (which contains the `data` and `python` folders).
+Follow the steps in order. All scripts accept `--data_dir` pointing to the dataset root (which contains the `data` and `python` folders).
 
 ### Step 1 — Train CNN Classifier
 
